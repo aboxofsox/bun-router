@@ -1,0 +1,1 @@
+export type HttpHandler = (r: Request) => Response
