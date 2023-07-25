@@ -2,6 +2,40 @@ import { ServerOptions } from 'http';
 import { Route, Router, HttpRequest } from './router.d';
 import { TLSOptions, TLSWebSocketServeOptions, WebSocketServeOptions } from 'bun';
 
+const notFound = async (): Promise<Response> =>  {
+    const response = new Response('not found', {
+        status: 404,
+        statusText: 'not found',
+        headers: { 'Content-Type': 'text/html'},
+    });
+
+    return new Promise((resolve) => {
+        resolve(response);
+    });
+}
+
+const serveHtml = async (filepath: string): Promise<Response> => {
+    const file = await Bun.file(filepath);
+    const exists = await file.exists();
+
+    if (!exists) 
+        return notFound();
+    
+    const content = await file.text();
+    if (content === '') 
+        return notFound();
+
+    const response = new Response(content, {
+        status: 200,
+        statusText: 'ok',
+        headers: { 'Content-Type': 'text/html'},
+    });
+
+    return new Promise<Response>((resolve) => {
+        resolve(response);
+    });
+}
+
 const json = (data: any): Response  => {
     const jsonString = JSON.stringify(data);
 
@@ -11,13 +45,14 @@ const json = (data: any): Response  => {
     return res
 }
 
+const html = async (filepath: string): Promise<Response> => serveHtml(filepath);
+
 
 const router: Router = (options: ServerOptions | TLSOptions | WebSocketServeOptions | TLSWebSocketServeOptions) => {
     const routes: Array<Route> = new Array();
 
     function extractParams(route: Route, req: HttpRequest) {
         const url = new URL(req.request.url);
-
         const pathSegments = route.pattern.split('/');
         const urlSegments = url.pathname.split('/');
 
@@ -33,7 +68,7 @@ const router: Router = (options: ServerOptions | TLSOptions | WebSocketServeOpti
     }
 
     return {
-        add: (pattern: string, method: string, callback: (req: HttpRequest) => Response) => {
+        add: (pattern: string, method: string, callback: (req: HttpRequest) => Response | Promise<Response>) => {
             routes.push({
                 pattern: pattern,
                 method: method,
@@ -66,4 +101,4 @@ const router: Router = (options: ServerOptions | TLSOptions | WebSocketServeOpti
     }
 }
 
-export { router, json }
+export { router, json, html }

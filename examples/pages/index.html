@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<meta charset=UTF-8>
+<meta name=viewport content=width=device-width, initial-scale=1.0>
+<title>Bun Router</title>
+
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: sans-serif;
+  }
+
+
+  main div {
+    width: 85%;
+    border-radius: 8px;
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+    padding: 4em;
+    background: #18191a;
+    color: white;
+  }
+
+  main div a {
+    background: none;
+    color: dodgerblue;
+    text-decoration: none;
+    font-weight: 200;
+  }
+
+
+  a:not(div a) {
+    text-decoration: none;
+    min-width: 128px;
+    text-align: center;
+    color: dodgerblue;
+    display: block;
+    padding: 0.85em;
+    margin: 0.25em;
+    background: #18191a;
+    border-radius: 5px;
+  }
+
+  main a:hover {
+    color: skyblue;
+    transition: color 100ms ease;
+  }
+
+  main {
+    display: flex;
+    background: #0d0d0d;
+    flex-flow: column;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
+    padding: 1.25em;
+  }
+
+  main section {
+    display: flex;
+  }
+
+
+</style>
+
+
+
+<main>
+  <div>
+    <h1>Bun Router</h1>
+    <p>A simple router, for <a href=https://bun.sh>Bun.sh.</a></p>
+  </div>
+  <section>
+    <a href=https://github.com/aboxofsox/bun-router/docs>Docs</a>
+    <a href=https://github.com/aboxofsox/bun-router/examples>Examples</a>
+    <a href=https://google.com>Why</a>
+  </section>
+</main>
