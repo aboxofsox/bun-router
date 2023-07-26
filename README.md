@@ -10,7 +10,7 @@ import { router } from 'bun-router';
 
 Create the `router`.
 ```typescript
-const r = router()
+const r = router(3000)
 ```
 
 Add routes to the `router`.
@@ -22,7 +22,7 @@ The `req` parameter is of type `HttpRequest` which is just a type that contains 
 
 Start the server.
 ```typescript
-r.serve();
+r.serve()
 ```
 
 Some overly-simple examples: 
