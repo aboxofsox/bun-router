@@ -1,7 +1,8 @@
 import { router, html } from '..';
+import { ServeOptions } from 'bun';
 import path from 'path';
 
-const r = router({port: 3000});
+const r = router();
 
 r.add('/page/:name', 'GET', async req => {
     const pageName = req.params.get('name')!;

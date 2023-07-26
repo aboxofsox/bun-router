@@ -1,6 +1,6 @@
 import { router, json, } from '..';
 
-const r = router({port: 3000});
+const r = router(3030);
 
 const userStore = new Map();
 const rando = (max: number) => `${Math.floor(Math.random() * max)}`

@@ -1,12 +1,10 @@
-import { ServerOptions } from 'http';
-import { Route, Router, HttpRequest } from './router.d';
-import { TLSOptions, TLSWebSocketServeOptions, WebSocketServeOptions } from 'bun';
+import { Route, Router, HttpRequest, Options } from './router.d';
 
-const notFound = async (): Promise<Response> =>  {
+const notFound = async (): Promise<Response> => {
     const response = new Response('not found', {
         status: 404,
         statusText: 'not found',
-        headers: { 'Content-Type': 'text/html'},
+        headers: { 'Content-Type': 'text/html' },
     });
 
     return new Promise((resolve) => {
@@ -15,20 +13,20 @@ const notFound = async (): Promise<Response> =>  {
 }
 
 const serveHtml = async (filepath: string): Promise<Response> => {
-    const file = await Bun.file(filepath);
+    const file = Bun.file(filepath);
     const exists = await file.exists();
 
-    if (!exists) 
+    if (!exists)
         return notFound();
-    
+
     const content = await file.text();
-    if (content === '') 
+    if (content === '')
         return notFound();
 
     const response = new Response(content, {
         status: 200,
         statusText: 'ok',
-        headers: { 'Content-Type': 'text/html'},
+        headers: { 'Content-Type': 'text/html' },
     });
 
     return new Promise<Response>((resolve) => {
@@ -36,7 +34,7 @@ const serveHtml = async (filepath: string): Promise<Response> => {
     });
 }
 
-const json = (data: any): Response  => {
+const json = (data: any): Response => {
     const jsonString = JSON.stringify(data);
 
     const res = new Response(jsonString);
@@ -47,8 +45,7 @@ const json = (data: any): Response  => {
 
 const html = async (filepath: string): Promise<Response> => serveHtml(filepath);
 
-
-const router: Router = (options: ServerOptions | TLSOptions | WebSocketServeOptions | TLSWebSocketServeOptions) => {
+const router: Router = (port?: number | string, options?: Options) => {
     const routes: Array<Route> = new Array();
 
     function extractParams(route: Route, req: HttpRequest) {
@@ -67,6 +64,7 @@ const router: Router = (options: ServerOptions | TLSOptions | WebSocketServeOpti
         }
     }
 
+
     return {
         add: (pattern: string, method: string, callback: (req: HttpRequest) => Response | Promise<Response>) => {
             routes.push({
@@ -76,7 +74,9 @@ const router: Router = (options: ServerOptions | TLSOptions | WebSocketServeOpti
             })
         },
         serve: () => {
+            console.log(`[bun-router]: Listening on port -> :${ port ?? 3000 }`)
             Bun.serve({
+                port: port ?? 3000,
                 ...options,
                 fetch(req) {
                     const url = new URL(req.url);
@@ -88,10 +88,10 @@ const router: Router = (options: ServerOptions | TLSOptions | WebSocketServeOpti
 
                         extractParams(route, httpRequest);
 
-                        if (httpRequest.params.size !== 0 && route.method === req.method) 
+                        if (httpRequest.params.size !== 0 && route.method === req.method)
                             return route.callback(httpRequest);
 
-                        else if (url.pathname === route.pattern && route.method === req.method) 
+                        else if (url.pathname === route.pattern && route.method === req.method)
                             return route.callback(httpRequest);
                     }
                     return new Response('not found');
