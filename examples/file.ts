@@ -1,5 +1,4 @@
 import { router, html } from '..';
-import { ServeOptions } from 'bun';
 import path from 'path';
 
 const r = router();

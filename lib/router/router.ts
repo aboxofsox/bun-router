@@ -45,25 +45,28 @@ const json = (data: any): Response => {
 
 const html = async (filepath: string): Promise<Response> => serveHtml(filepath);
 
-const router: Router = (port?: number | string, options?: Options) => {
-    const routes: Array<Route> = new Array();
+const extractParams = (route: Route, req: HttpRequest) => {
+    const url = new URL(req.request.url);
+    const pathSegments = route.pattern.split('/');
+    const urlSegments = url.pathname.split('/');
 
-    function extractParams(route: Route, req: HttpRequest) {
-        const url = new URL(req.request.url);
-        const pathSegments = route.pattern.split('/');
-        const urlSegments = url.pathname.split('/');
+    if (pathSegments.length !== urlSegments.length) return
 
-        if (pathSegments.length !== urlSegments.length) return
-
-        for (let i = 0; i < pathSegments.length; i++) {
-            if ((pathSegments[i][0] === ':') && (pathSegments[i - 1] === urlSegments[i - 1])) {
-                const k = pathSegments[i].replace(':', '');
-                const v = urlSegments[i];
-                req.params.set(k, v);
-            }
+    for (let i = 0; i < pathSegments.length; i++) {
+        if ((pathSegments[i][0] === ':') && (pathSegments[i - 1] === urlSegments[i - 1])) {
+            const k = pathSegments[i].replace(':', '');
+            const v = urlSegments[i];
+            req.params.set(k, v);
         }
     }
+}
 
+const match = (route: Route, req: HttpRequest): boolean => {
+    return req.params.size !== 0 && route.method === req.request.method
+}
+
+const router: Router = (port?: number | string, options?: Options) => {
+    const routes: Array<Route> = new Array();
 
     return {
         add: (pattern: string, method: string, callback: (req: HttpRequest) => Response | Promise<Response>) => {
@@ -88,11 +91,7 @@ const router: Router = (port?: number | string, options?: Options) => {
 
                         extractParams(route, httpRequest);
 
-                        if (httpRequest.params.size !== 0 && route.method === req.method)
-                            return route.callback(httpRequest);
-
-                        else if (url.pathname === route.pattern && route.method === req.method)
-                            return route.callback(httpRequest);
+                        if (match(route, httpRequest)) return route.callback(httpRequest);
                     }
                     return new Response('not found');
                 }
