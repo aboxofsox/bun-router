@@ -26,7 +26,7 @@ const file = async (filepath: string): Promise<Response> => {
     const response = new Response(content, {
         status: 200,
         statusText: 'ok',
-        headers: { 'Content-Type': 'text/html' },
+        headers: { 'Content-Type': 'text/html; charset=utf-8' },
     });
 
     return new Promise<Response>((resolve) => {
@@ -35,10 +35,13 @@ const file = async (filepath: string): Promise<Response> => {
 }
 
 const html = async (content: string): Promise<Response> => {
-    const response = new Response(content, {
+    const buff = Buffer.from(content);
+    const c = buff.toString('hex');
+
+    const response = new Response(c, {
         status: 200,
         statusText: 'ok',
-        headers: {'Content-Type': 'text/html'}
+        headers: {'Content-Type': 'text/html'},
     });
 
     return new Promise<Response>((resolve) => {
