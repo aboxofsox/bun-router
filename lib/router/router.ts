@@ -72,7 +72,7 @@ const extractParams = (route: Route, req: HttpRequest) => {
 }
 
 const match = (route: Route, req: HttpRequest): boolean => {
-    return req.params.size !== 0 || route.method === req.request.method
+    return req.params.size !== 0 || route.pattern === (new URL(req.request.url)).pathname
 }
 
 const router: Router = (port?: number | string, options?: Options) => {
@@ -100,6 +100,10 @@ const router: Router = (port?: number | string, options?: Options) => {
                         };
 
                         extractParams(route, httpRequest);
+
+                        if (match(route, httpRequest))
+                            return route.callback(httpRequest);
+
 
                         if (match(route, httpRequest)) return route.callback(httpRequest);
                     }
