@@ -12,7 +12,7 @@ const notFound = async (): Promise<Response> => {
     });
 }
 
-const html = async (filepath: string): Promise<Response> => {
+const file = async (filepath: string): Promise<Response> => {
     const file = Bun.file(filepath);
     const exists = await file.exists();
 
@@ -27,6 +27,18 @@ const html = async (filepath: string): Promise<Response> => {
         status: 200,
         statusText: 'ok',
         headers: { 'Content-Type': 'text/html' },
+    });
+
+    return new Promise<Response>((resolve) => {
+        resolve(response);
+    });
+}
+
+const html = async (content: string): Promise<Response> => {
+    const response = new Response(content, {
+        status: 200,
+        statusText: 'ok',
+        headers: {'Content-Type': 'text/html'}
     });
 
     return new Promise<Response>((resolve) => {
@@ -98,4 +110,4 @@ const router: Router = (port?: number | string, options?: Options) => {
     }
 }
 
-export { router, json, html, extractParams }
+export { router, json, file, extractParams }

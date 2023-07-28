@@ -1,11 +1,11 @@
 import { describe, test, expect } from 'bun:test';
-import { html, json, extractParams } from '..';
+import { file, json, extractParams } from '..';
 import { HttpRequest, Route } from '../lib/router/router.d';
 
 describe('Helpers', async () => {
     test('html', async () => {
         const fp = './examples/pages/index.html';
-        const res = await html(fp);
+        const res = await file(fp);
         const contentType = res.headers.get('Content-Type');
     
         expect(contentType).toBe('text/html');
