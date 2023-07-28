@@ -4,13 +4,6 @@ const r = router();
 
 const aliens = '👽'.repeat(30);
 
-r.add('/', 'GET', (req) => {
-    const message = {
-        page: 'home',
-        space: 'home',
-        body: 'ok'
-    };
-    return json(message);
-});
+r.add('/space', 'GET', () => html(`<h1>${aliens}</h1>`))
 
 r.serve();
