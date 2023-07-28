@@ -110,4 +110,4 @@ const router: Router = (port?: number | string, options?: Options) => {
     }
 }
 
-export { router, json, file, extractParams }
+export { router, json, file, extractParams, html }
