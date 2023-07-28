@@ -41,7 +41,7 @@ const html = async (content: string): Promise<Response> => {
     const response = new Response(c, {
         status: 200,
         statusText: 'ok',
-        headers: {'Content-Type': 'text/html'},
+        headers: {'Content-Type': 'text/html; charset=utf-8'},
     });
 
     return new Promise<Response>((resolve) => {
