@@ -60,7 +60,7 @@ const extractParams = (route: Route, req: HttpRequest) => {
 }
 
 const match = (route: Route, req: HttpRequest): boolean => {
-    return req.params.size !== 0 && route.method === req.request.method
+    return req.params.size !== 0 || route.method === req.request.method
 }
 
 const router: Router = (port?: number | string, options?: Options) => {
