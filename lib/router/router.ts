@@ -12,7 +12,7 @@ const notFound = async (): Promise<Response> => {
     });
 }
 
-const serveHtml = async (filepath: string): Promise<Response> => {
+const html = async (filepath: string): Promise<Response> => {
     const file = Bun.file(filepath);
     const exists = await file.exists();
 
@@ -42,8 +42,6 @@ const json = (data: any): Response => {
 
     return res
 }
-
-const html = async (filepath: string): Promise<Response> => serveHtml(filepath);
 
 const extractParams = (route: Route, req: HttpRequest) => {
     const url = new URL(req.request.url);
@@ -100,4 +98,4 @@ const router: Router = (port?: number | string, options?: Options) => {
     }
 }
 
-export { router, json, html }
+export { router, json, html, extractParams }
