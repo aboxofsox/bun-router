@@ -6,19 +6,15 @@ describe('Helpers', async () => {
     test('html', async () => {
         const fp = './examples/pages/index.html';
         const res = await html(fp);
-        
         const contentType = res.headers.get('Content-Type');
-        console.log(res.statusText);
     
         expect(contentType).toBe('text/html');
-        // expect(res.statusText).toBe('ok');
         expect(res.status).toBe(200);
     });
 
     test('json', async () => {
         const test = { message: 'ok' }
         const res = await json(test);
-
         const jsn = await res.json();
 
         expect(jsn).toStrictEqual({ message: 'ok' })
@@ -48,5 +44,4 @@ describe('Helpers', async () => {
         const name = httpRequest.params.get('name');
         expect(name).toBe('bar');
     });
-
 });
