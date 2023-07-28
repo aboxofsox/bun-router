@@ -8,7 +8,7 @@ describe('Helpers', async () => {
         const res = await file(fp);
         const contentType = res.headers.get('Content-Type');
     
-        expect(contentType).toBe('text/html');
+        expect(contentType).toBe('text/html; charset=utf-8');
         expect(res.status).toBe(200);
     });
 

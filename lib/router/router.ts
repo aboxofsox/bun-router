@@ -35,10 +35,7 @@ const file = async (filepath: string): Promise<Response> => {
 }
 
 const html = async (content: string): Promise<Response> => {
-    const buff = Buffer.from(content);
-    const c = buff.toString('hex');
-
-    const response = new Response(c, {
+    const response = new Response(content, {
         status: 200,
         statusText: 'ok',
         headers: {'Content-Type': 'text/html; charset=utf-8'},
