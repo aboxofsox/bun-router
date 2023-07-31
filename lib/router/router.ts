@@ -1,4 +1,6 @@
 import { Route, Router, HttpRequest, Options } from './router.d';
+import { readDir } from '../fs/fsys';
+import path from 'path';
 
 const notFound = async (): Promise<Response> => {
     const response = new Response('not found', {
@@ -93,6 +95,7 @@ const match = (route: Route, req: HttpRequest): boolean => {
 
 const router: Router = (port?: number | string, options?: Options) => {
     const routes: Array<Route> = new Array();
+    const paths: {[key: string]:string} = {};
 
     return {
         add: (pattern: string, method: string, callback: (req: HttpRequest) => Response | Promise<Response>) => {
@@ -102,13 +105,31 @@ const router: Router = (port?: number | string, options?: Options) => {
                 callback: callback,
             })
         },
+        fs: async (root: string) => {
+            await readDir(root, async (fp, _) => {
+                const ext = path.extname(fp);
+                const content = await Bun.file(fp).text();
+                
+                if (ext === '.html') paths[fp.replace(ext, '')] = content;
+
+            });
+
+            for (const filepath in paths) {
+                const route: Route = {
+                    pattern: filepath,
+                    method: 'GET',
+                    callback: async () => file(filepath),
+                }
+            }
+
+        
+        },
         serve: () => {
             console.log(`[bun-router]: Listening on port -> :${port ?? 3000}`)
             Bun.serve({
                 port: port ?? 3000,
                 ...options,
                 fetch(req) {
-                    const url = new URL(req.url);
                     for (const route of routes) {
                         const httpRequest: HttpRequest = {
                             request: req,

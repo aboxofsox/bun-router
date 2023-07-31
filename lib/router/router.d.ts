@@ -23,6 +23,7 @@ type Options = ServeOptions
 
 type Router = (port?: number | string, options?: Options) => {
     add: (pattern: string, method: string, callback: (req: HttpRequest) => Response | Promise<Response>) => void,
+    fs: (root: string) => void,
     serve: () => void,
 }
 
