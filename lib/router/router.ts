@@ -38,8 +38,9 @@ const html = async (content: string): Promise<Response> => {
     const response = new Response(content, {
         status: 200,
         statusText: 'ok',
-        headers: {'Content-Type': 'text/html; charset=utf-8'},
+        headers: { 'Content-Type': 'text/html; charset=utf-8' },
     });
+    content = Bun.escapeHTML(content);
 
     return new Promise<Response>((resolve) => {
         resolve(response);
@@ -55,20 +56,35 @@ const json = (data: any): Response => {
     return res
 }
 
-const extractParams = (route: Route, req: HttpRequest) => {
+const extract = (route: Route, req: HttpRequest) => {
     const url = new URL(req.request.url);
     const pathSegments = route.pattern.split('/');
     const urlSegments = url.pathname.split('/');
 
     if (pathSegments.length !== urlSegments.length) return
 
-    for (let i = 0; i < pathSegments.length; i++) {
-        if ((pathSegments[i][0] === ':') && (pathSegments[i - 1] === urlSegments[i - 1])) {
-            const k = pathSegments[i].replace(':', '');
-            const v = urlSegments[i];
-            req.params.set(k, v);
+    return {
+        params: () => {
+            for (let i = 0; i < pathSegments.length; i++) {
+                if (pathSegments[i][0] === ':' && pathSegments[i - 1] === urlSegments[i - 1]) {
+                    const k = pathSegments[i].replace(':', '');
+                    const v = urlSegments[i];
+                    req.params.set(k, v);
+                }
+            }
+        },
+        fs: () => {
+            for (let i = 0; i < pathSegments.length; i++) {
+                if (pathSegments[i][0] === '[' && pathSegments[i - 1] === urlSegments[i - 1]) {
+                    const k = pathSegments[i].replace('[', '').replace(']', '');
+                    const v = urlSegments[i];
+                    console.log(k, v);
+                    req.fs.set(k,v);
+                }
+            }
         }
     }
+    
 }
 
 const match = (route: Route, req: HttpRequest): boolean => {
@@ -87,7 +103,7 @@ const router: Router = (port?: number | string, options?: Options) => {
             })
         },
         serve: () => {
-            console.log(`[bun-router]: Listening on port -> :${ port ?? 3000 }`)
+            console.log(`[bun-router]: Listening on port -> :${port ?? 3000}`)
             Bun.serve({
                 port: port ?? 3000,
                 ...options,
@@ -97,15 +113,18 @@ const router: Router = (port?: number | string, options?: Options) => {
                         const httpRequest: HttpRequest = {
                             request: req,
                             params: new Map(),
+                            fs: new Map(),
                         };
 
-                        extractParams(route, httpRequest);
+                        const extractor = extract(route, httpRequest);
+
+                        if (route.pattern.includes('['))
+                            extractor?.fs();
+                        if (route.pattern.includes(':'))
+                            extractor?.params();
 
                         if (match(route, httpRequest))
                             return route.callback(httpRequest);
-
-
-                        if (match(route, httpRequest)) return route.callback(httpRequest);
                     }
                     return new Response('not found');
                 }
@@ -114,4 +133,4 @@ const router: Router = (port?: number | string, options?: Options) => {
     }
 }
 
-export { router, json, file, extractParams, html }
+export { router, json, file, extract, html }

@@ -170,3 +170,4 @@ dist
 
 # Not ready
 lib/markdown/
+lib/http/
