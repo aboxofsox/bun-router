@@ -114,14 +114,11 @@ const router: Router = (port?: number | string, options?: Options) => {
 
                 }
 
-                console.log((pattern[0] != '/'))
                 if (pattern[0] !== '/') pattern = '/' + pattern;
 
                 let patternPath = pattern + base;
 
                 if (base === 'index') patternPath = pattern;
-
-                console.log(patternPath);
 
                 const route: Route = {
                     pattern: patternPath,
@@ -130,8 +127,6 @@ const router: Router = (port?: number | string, options?: Options) => {
                 };
                 routes.push(route);
             });
-            console.log(routes.length);
-
         },
         serve: () => {
             console.log(`[bun-router]: Listening on port -> :${port ?? 3000}`)
