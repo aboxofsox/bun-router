@@ -31,7 +31,6 @@ const file = async (filepath: string): Promise<Response> => {
         contentType = file.type + '; charset=utf-8';
     }
 
-    // 'text/html; charset=utf-8'
     const response = new Response(content, {
         status: 200,
         statusText: 'ok',

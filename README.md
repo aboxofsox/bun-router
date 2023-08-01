@@ -96,3 +96,12 @@ r.add('/get/:key', 'GET', req => {
 r.serve();
 ```
 
+### Static Files
+```ts
+import { router } from 'bun-router';
+
+const r = router();
+r.static('/', './pages');
+r.serve();
+```
+
