@@ -45,6 +45,8 @@ function run_test() {
     else
         echo "Failed: $url returned $actual | expected: $expected"
     fi
+
+    rm "$name"
 }
 
 for expected in "${!test_cases[@]}"; do
