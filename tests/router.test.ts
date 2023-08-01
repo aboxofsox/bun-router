@@ -1,47 +1,101 @@
 import { describe, test, expect } from 'bun:test';
-import { file, json, extractParams } from '..';
-import { HttpRequest, Route } from '../lib/router/router.d';
+import { router, extract } from '..';
+import { Context, Route } from '../lib/router/router.d';
 
-describe('Helpers', async () => {
-    test('html', async () => {
-        const fp = './examples/pages/index.html';
-        const res = await file(fp);
-        const contentType = res.headers.get('Content-Type');
-    
-        expect(contentType).toBe('text/html; charset=utf-8');
-        expect(res.status).toBe(200);
-    });
+describe('URL Params', () => {
+    test('/user/:name', () => {
+        const route: Route = {
+            pattern: '/user/:name',
+            method: 'GET',
+            callback: () => new Response('ok'),
+        };
 
-    test('json', async () => {
-        const test = { message: 'ok' }
-        const res = await json(test);
-        const jsn = await res.json();
-
-        expect(jsn).toStrictEqual({ message: 'ok' })
-
-    });
-
-    test('extract params 1', () => {
-        const route: Route = {pattern: '/:name', method: 'GET', callback: (req) => new Response('ok')};
-        const httpRequest: HttpRequest = {
-            request: new Request('http://localhost:3000/foo'),
+        const ctx: Context = {
+            request: new Request('http://localhost:3000/user/foo'),
             params: new Map(),
-        }
+            fs: new Map(),
+        };
 
-        extractParams(route, httpRequest);
-        const name = httpRequest.params.get('name');
+        const extractor = extract(route, ctx);
+
+        extractor?.params();
+
+        const name = ctx.params.get('name');
         expect(name).toBe('foo');
     });
 
-    test('extract params 2', () =>{
-        const route: Route = {pattern: '/foo/:name', method: 'GET', callback: (req) => new Response('ok')};
-        const httpRequest: HttpRequest = {
-            request: new Request('http://localhost:3000/foo/bar'),
+    test('/user/:name/:id', () => {
+        const route: Route = {
+            pattern: '/user/:name/:id',
+            method: 'GET',
+            callback: () => new Response('ok'),
+        };
+
+        const ctx: Context = {
+            request: new Request('http://localhost:3000/user/foo/123'),
             params: new Map(),
+            fs: new Map(),
+        };
+
+        const extractor = extract(route, ctx);
+
+        extractor?.params();
+
+        const name = ctx.params.get('name');
+        const id = ctx.params.get('id');
+
+        expect(name).toBe('foo');
+        expect(id).toBe('123');
+    });
+
+    test('/foo', () => {
+        const route: Route = {
+            pattern: '/foo',
+            method: 'GET',
+            callback: () => new Response('ok'),
         }
 
-        extractParams(route, httpRequest);
-        const name = httpRequest.params.get('name');
-        expect(name).toBe('bar');
+        const ctx: Context = {
+            request: new Request('http://localhost:3000/foo'),
+            params: new Map(),
+            fs: new Map(),
+        }
+
+        const url = new URL(ctx.request.url);
+
+        expect(url.pathname).toBe(route.pattern);
+    });
+});
+
+describe('Router', () => {
+    test('Serve', async () => {
+        const proc = Bun.spawn(['./tests/serve.test.sh'], {
+            onExit: (proc, exitCode, signalCode , error) => {
+                if (error) console.error(error);     
+            },
+        });
+    
+        const text = await new Response(proc.stdout).text();
+        
+        const hasFailed = text.includes('Failed');
+
+        if (hasFailed) console.log(text);
+
+        expect(hasFailed).toBe(false);
+
+        proc.kill(0);
+    })
+
+    test('Static', async() => {
+        const proc = Bun.spawn(['./tests/static.test.sh']);
+        
+        const text = await new Response(proc.stdout).text();
+
+        const hasFailed = text.includes('Failed');
+        if (hasFailed) console.log(text);
+
+        expect(hasFailed).toBe(false);
+
+        proc.kill(0);
     });
 });
