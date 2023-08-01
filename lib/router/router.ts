@@ -1,5 +1,6 @@
 import { Route, Router, Context, Options } from './router.d';
 import { readDir } from '../fs/fsys';
+import { logger } from '../logger/logger';
 import path from 'path';
 
 const notFound = async (): Promise<Response> => {
@@ -93,6 +94,7 @@ const match = (route: Route, ctx: Context): boolean => {
 const router: Router = (port?: number | string, options?: Options) => {
     const routes: Array<Route> = new Array();
     const paths: { [key: string]: string } = {};
+    const lgr = logger();
 
     return {
         add: (pattern: string, method: string, callback: (ctx: Context) => Response | Promise<Response>) => {
@@ -129,7 +131,7 @@ const router: Router = (port?: number | string, options?: Options) => {
             });
         },
         serve: () => {
-            console.log(`[bun-router]: Listening on port -> :${port ?? 3000}`)
+            lgr.start(port ?? 3000);
             Bun.serve({
                 port: port ?? 3000,
                 ...options,
@@ -145,9 +147,13 @@ const router: Router = (port?: number | string, options?: Options) => {
 
                         extractor?.params();
 
-                        if (match(route, ctx))
+                        if (match(route, ctx)) {
+                            lgr.info(200, route.pattern, route.method)
                             return route.callback(ctx);
+                        }
                     }
+                    const url = new URL(req.url);
+                    lgr.info(404, url.pathname, req.method, 'not found');
                     return new Response('not found');
                 }
             });
