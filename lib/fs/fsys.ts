@@ -4,19 +4,6 @@ import path from 'path';
 
 const isDir = async (fp: string): Promise<boolean> => (await fs.lstat(fp)).isDirectory();
 
-const sum = async (fp: string): Promise<string> => {
-    const file = await Bun.file(fp).text();
-    const hasher = new Bun.CryptoHasher('md5');
-
-    hasher.update(file);
-
-    return new Promise((resolve, reject) => {
-        if (hasher.byteLength === 0) reject('no data');
-        const hash = Buffer.from(hasher.digest().toString()).toString('hex');
-        return hash;
-    });
-}
-
 const readDir = async (dirpath: string, handler: (filepath: string, entry: BunFile) => void) => {
     try {
         const files = await fs.readdir(dirpath);
@@ -34,4 +21,4 @@ const readDir = async (dirpath: string, handler: (filepath: string, entry: BunFi
     }
 }
 
-export { readDir, sum }
+export { readDir }
