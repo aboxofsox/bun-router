@@ -46,7 +46,10 @@ function run_test() {
         echo "Failed: $url returned $actual | expected: $expected"
     fi
 
-    rm "$name"
+    if does_exist "$name"; then
+        rm "$name"
+    fi
+
 }
 
 for expected in "${!test_cases[@]}"; do

@@ -29,8 +29,6 @@ import {router, html, json } from 'bun-router';
 
 const r = router(3001);
 
-r.static('/assets', './assets');
-
 r.add('/', (ctx) => html('<h1>Hello World</h1>'));
 
 r.add('/greeting/:name', 'GET', (ctx) => {

@@ -1,6 +1,8 @@
 import { describe, test, expect } from 'bun:test';
 import { router, extract } from '..';
 import { Context, Route } from '../lib/router/router.d';
+import { logger } from '../lib/logger/logger';
+import { color } from '../lib/logger/color';
 
 describe('URL Params', () => {
     test('/user/:name', () => {

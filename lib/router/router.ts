@@ -1,5 +1,6 @@
 import { Route, Router, Context, Options } from './router.d';
 import { readDir } from '../fs/fsys';
+import { logger } from '../logger/logger';
 import path from 'path';
 
 const notFound = async (): Promise<Response> => {
@@ -7,6 +8,17 @@ const notFound = async (): Promise<Response> => {
         status: 404,
         statusText: 'not found',
         headers: { 'Content-Type': 'text/html' },
+    });
+
+    return new Promise((resolve) => {
+        resolve(response);
+    });
+}
+
+const noContent = async (): Promise<Response> => {
+    const response = new Response('no content', {
+        status: 204,
+        statusText: 'no content',
     });
 
     return new Promise((resolve) => {
@@ -93,6 +105,7 @@ const match = (route: Route, ctx: Context): boolean => {
 const router: Router = (port?: number | string, options?: Options) => {
     const routes: Array<Route> = new Array();
     const paths: { [key: string]: string } = {};
+    const lgr = logger();
 
     return {
         add: (pattern: string, method: string, callback: (ctx: Context) => Response | Promise<Response>) => {
@@ -129,11 +142,12 @@ const router: Router = (port?: number | string, options?: Options) => {
             });
         },
         serve: () => {
-            console.log(`[bun-router]: Listening on port -> :${port ?? 3000}`)
+            lgr.start(port ?? 3000);
             Bun.serve({
                 port: port ?? 3000,
                 ...options,
                 fetch(req) {
+                    const url = new URL(req.url);
                     for (const route of routes) {
                         const ctx: Context = {
                             request: req,
@@ -145,9 +159,14 @@ const router: Router = (port?: number | string, options?: Options) => {
 
                         extractor?.params();
 
-                        if (match(route, ctx))
+                        if (url.pathname === '/favicon.ico') return noContent();
+
+                        if (match(route, ctx)) {
+                            lgr.info(200, route.pattern, route.method)
                             return route.callback(ctx);
+                        }
                     }
+                    lgr.info(404, url.pathname, req.method, 'not found');
                     return new Response('not found');
                 }
             });
