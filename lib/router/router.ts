@@ -99,7 +99,18 @@ const extract = (route: Route, ctx: Context) => {
 }
 
 const match = (route: Route, ctx: Context): boolean => {
-    return ctx.params.size !== 0 || route.pattern === (new URL(ctx.request.url)).pathname
+    const url = new URL(ctx.request.url);
+    const patternRegex = new RegExp('^' + route.pattern.replace(/:[^/]+/g, '([^/]+)') + '$');
+    const matches = url.pathname.match(patternRegex);
+
+    if (matches) {
+        const extractor = extract(route, ctx);
+        extractor?.params();
+
+        return true;
+    }
+
+    return false;
 }
 
 const router: Router = (port?: number | string, options?: Options) => {
@@ -154,10 +165,6 @@ const router: Router = (port?: number | string, options?: Options) => {
                             params: new Map(),
                             fs: new Map(),
                         };
-
-                        const extractor = extract(route, ctx);
-
-                        extractor?.params();
 
                         if (url.pathname === '/favicon.ico') return noContent();
 
