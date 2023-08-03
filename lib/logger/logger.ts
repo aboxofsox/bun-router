@@ -51,7 +51,7 @@ const logger = (): Logger => {
             const { stamp } = timestamp((new Date(Date.now())));
             const source = color('green', 'bgBlack', `[bun-router ${stamp}]`);
             const rp = color('white', 'bgBlack', routePath);
-            const msg = `${source} : ${colorCode(statusCode)} : ${rp} ${(method === 'GET') ? '->' : '<-'} ${method}\n`
+            const msg = `${source}: ${colorCode(statusCode)}: ${rp} ${(method === 'GET') ? '->' : '<-'} ${method}\n`
 
             await Bun.write(Bun.stdout, msg);
 
@@ -61,7 +61,7 @@ const logger = (): Logger => {
             const { stamp } = timestamp((new Date(Date.now())));
             const source = color('black', 'bgRed', `[error ${stamp}]`);
             const rp = color('white', 'bgBlack', routePath);
-            const msg = `${source} : ${colorCode(statusCode)} : ${rp} ${(method === 'GET') ? '->' : '<-'} ${error.message}\n`;
+            const msg = `${source}: ${colorCode(statusCode)}: ${rp} ${(method === 'GET') ? '->' : '<-'} ${error.message}\n`;
 
             await Bun.write(Bun.stdout, msg);
 

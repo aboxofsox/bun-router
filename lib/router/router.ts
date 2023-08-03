@@ -15,6 +15,17 @@ const notFound = async (): Promise<Response> => {
     });
 }
 
+const noContent = async (): Promise<Response> => {
+    const response = new Response('no content', {
+        status: 204,
+        statusText: 'no content',
+    });
+
+    return new Promise((resolve) => {
+        resolve(response);
+    });
+}
+
 const file = async (filepath: string): Promise<Response> => {
     const file = Bun.file(filepath);
     const exists = await file.exists();
@@ -136,6 +147,7 @@ const router: Router = (port?: number | string, options?: Options) => {
                 port: port ?? 3000,
                 ...options,
                 fetch(req) {
+                    const url = new URL(req.url);
                     for (const route of routes) {
                         const ctx: Context = {
                             request: req,
@@ -147,12 +159,13 @@ const router: Router = (port?: number | string, options?: Options) => {
 
                         extractor?.params();
 
+                        if (url.pathname === '/favicon.ico') return noContent();
+
                         if (match(route, ctx)) {
                             lgr.info(200, route.pattern, route.method)
                             return route.callback(ctx);
                         }
                     }
-                    const url = new URL(req.url);
                     lgr.info(404, url.pathname, req.method, 'not found');
                     return new Response('not found');
                 }
