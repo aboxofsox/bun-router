@@ -1,8 +1,6 @@
 import { describe, test, expect } from 'bun:test';
-import { router, extract } from '..';
+import { extract, cache } from '..';
 import { Context, Route } from '../lib/router/router.d';
-import { logger } from '../lib/logger/logger';
-import { color } from '../lib/logger/color';
 
 describe('URL Params', () => {
     test('/user/:name', () => {
@@ -15,7 +13,6 @@ describe('URL Params', () => {
         const ctx: Context = {
             request: new Request('http://localhost:3000/user/foo'),
             params: new Map(),
-            fs: new Map(),
         };
 
         const extractor = extract(route, ctx);
@@ -36,7 +33,6 @@ describe('URL Params', () => {
         const ctx: Context = {
             request: new Request('http://localhost:3000/user/foo/123'),
             params: new Map(),
-            fs: new Map(),
         };
 
         const extractor = extract(route, ctx);
@@ -60,7 +56,6 @@ describe('URL Params', () => {
         const ctx: Context = {
             request: new Request('http://localhost:3000/foo'),
             params: new Map(),
-            fs: new Map(),
         }
 
         const url = new URL(ctx.request.url);
@@ -72,7 +67,7 @@ describe('URL Params', () => {
 describe('Router', () => {
     test('Serve', async () => {
         const proc = Bun.spawn(['./tests/serve.test.sh'], {
-            onExit: (proc, exitCode, signalCode , error) => {
+            onExit: (_proc, _exitCode, _signalCode , error) => {
                 if (error) console.error(error);     
             },
         });
@@ -99,5 +94,15 @@ describe('Router', () => {
         expect(hasFailed).toBe(false);
 
         proc.kill(0);
+    });
+});
+
+describe('Cache', async () => {
+    test('Create', async () => {
+        const cch = cache();
+        cch.preload('./examples/pages');
+        const size = await cch.size();
+        console.log(size);
+        expect(size).toBe(4);
     });
 });

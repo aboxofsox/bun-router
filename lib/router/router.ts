@@ -3,8 +3,19 @@ import { readDir } from '../fs/fsys';
 import { logger } from '../logger/logger';
 import path from 'path';
 
-const notFound = async (): Promise<Response> => {
-    const response = new Response('not found', {
+const httpMessage = async (status: number, msg?: string): Promise<Response> => {
+    const response = new Response(msg ?? '?', {
+        status: status,
+        statusText: msg ?? '?',
+        headers: {'Content-Type': 'text/html; charset-uft-8'}
+    });
+    return new Promise((resolve) => {
+        resolve(response);
+    });
+}
+
+const notFound = async (msg?: string): Promise<Response> => {
+    const response = new Response(msg ?? 'not found', {
         status: 404,
         statusText: 'not found',
         headers: { 'Content-Type': 'text/html' },
@@ -31,11 +42,11 @@ const file = async (filepath: string): Promise<Response> => {
     const exists = await file.exists();
 
     if (!exists)
-        return notFound();
+        return notFound(`File not found: ${filepath}`);
 
     const content = await file.arrayBuffer();
     if (!content)
-        return notFound();
+        return noContent();
 
     let contentType = 'text/html; charset=utf-8';
 
@@ -53,6 +64,7 @@ const file = async (filepath: string): Promise<Response> => {
         resolve(response);
     });
 }
+
 
 const html = async (content: string): Promise<Response> => {
     const response = new Response(content, {
@@ -83,7 +95,6 @@ const extract = (route: Route, ctx: Context) => {
 
     if (pathSegments.length !== urlSegments.length) return
 
-
     return {
         params: () => {
             for (let i = 0; i < pathSegments.length; i++) {
@@ -104,7 +115,6 @@ const match = (route: Route, ctx: Context): boolean => {
 
 const router: Router = (port?: number | string, options?: Options) => {
     const routes: Array<Route> = new Array();
-    const paths: { [key: string]: string } = {};
     const lgr = logger();
 
     return {
@@ -122,10 +132,7 @@ const router: Router = (port?: number | string, options?: Options) => {
 
                 let base = path.basename(pure);
 
-                if (ext === '.html') {
-                    base = base.replace(ext, '');
-
-                }
+                if (ext === '.html') base = base.replace(ext, '');
 
                 if (pattern[0] !== '/') pattern = '/' + pattern;
 
@@ -152,7 +159,6 @@ const router: Router = (port?: number | string, options?: Options) => {
                         const ctx: Context = {
                             request: req,
                             params: new Map(),
-                            fs: new Map(),
                         };
 
                         const extractor = extract(route, ctx);
@@ -167,11 +173,12 @@ const router: Router = (port?: number | string, options?: Options) => {
                         }
                     }
                     lgr.info(404, url.pathname, req.method, 'not found');
-                    return new Response('not found');
+                    return httpMessage(404, 'not found');
                 }
             });
         },
     }
 }
+
 
 export { router, json, file, extract, html }
