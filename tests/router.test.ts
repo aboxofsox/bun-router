@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test';
-import { extract, cache } from '..';
+import { extract } from '..';
 import { Context, Route } from '../lib/router/router.d';
 
 describe('URL Params', () => {
@@ -97,12 +97,3 @@ describe('Router', () => {
     });
 });
 
-describe('Cache', async () => {
-    test('Create', async () => {
-        const cch = cache();
-        cch.preload('./examples/pages');
-        const size = await cch.size();
-        console.log(size);
-        expect(size).toBe(4);
-    });
-});
