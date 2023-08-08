@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "declaration": true,
     "lib": ["ESNext"],
     "module": "esnext",
     "target": "esnext",
@@ -15,6 +16,7 @@
     "allowJs": true,
     "noEmit": true,
     "types": [
+      "./index.d.ts",
       "bun-types" // add Bun global
     ]
   }
