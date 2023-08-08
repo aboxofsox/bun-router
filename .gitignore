@@ -59,23 +59,23 @@ jspm_packages/
 
 web_modules/
 
-# TypeScript cache
+# TypeScript linkedList
 
 \*.tsbuildinfo
 
-# Optional npm cache directory
+# Optional npm linkedList directory
 
 .npm
 
-# Optional eslint cache
+# Optional eslint linkedList
 
 .eslintcache
 
-# Optional stylelint cache
+# Optional stylelint linkedList
 
 .stylelintcache
 
-# Microbundle cache
+# Microbundle linkedList
 
 .rpt2_cache/
 .rts2_cache_cjs/
@@ -102,7 +102,7 @@ web_modules/
 .env.production.local
 .env.local
 
-# parcel-bundler cache (https://parceljs.org/)
+# parcel-bundler linkedList (https://parceljs.org/)
 
 .cache
 .parcel-cache
@@ -131,12 +131,12 @@ dist
 
 .vuepress/dist
 
-# vuepress v2.x temp and cache directory
+# vuepress v2.x temp and linkedList directory
 
 .temp
 .cache
 
-# Docusaurus cache and generated files
+# Docusaurus linkedList and generated files
 
 .docusaurus
 
@@ -144,7 +144,7 @@ dist
 
 .serverless/
 
-# FuseBox cache
+# FuseBox linkedList
 
 .fusebox/
 

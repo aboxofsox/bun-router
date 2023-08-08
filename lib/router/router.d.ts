@@ -4,7 +4,6 @@ import { TLSOptions, TLSWebSocketServeOptions, WebSocketServeOptions, ServeOptio
 type Context = {
     request: Request,
     params: Map<string, string>,
-    fs: Map<string, string>,
     token?: string,
 }
 

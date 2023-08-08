@@ -14,6 +14,7 @@ const timestamp = (date: Date) => {
     return {month, day, hour, minute, stamp};
 }
 
+// append ANSI color escape sequences to a string based on the given HTTP status code.
 const colorCode = (n: number, text?:string): string => {
     const s = ` [${String(n)}${text ?? ''}] `;
     if (n < 100) return color('black', 'bgYellow', s);
@@ -39,6 +40,7 @@ const logger = (): Logger => {
     const messages: string[] = [];
     const errors: string[] = [];
     return {
+        // initial log message
         start: async (port: number | string) => {
             const { stamp } = timestamp((new Date(Date.now())));
             const source = color('green', 'bgBlack', `[bun-router ${stamp}]`)
