@@ -1,4 +1,5 @@
-import { Route, Router, Context, Options } from './router.d';
+import { Database } from 'bun:sqlite';
+import { Route, Router, Context, RouterOptions, Options } from './router.d';
 import { readDir } from '../fs/fsys';
 import { logger } from '../logger/logger';
 import path from 'path';
@@ -135,9 +136,13 @@ const match = (route: Route, ctx: Context): boolean => {
 
     return false;
 }
-const router: Router = (port?: number | string, options?: Options) => {
+
+
+
+const router: Router = (port?: number | string, options?: RouterOptions<Options>) => {
     const routes: Array<Route> = new Array();
     const lgr = logger();
+    let dbConn = '';
 
     return {
         // add a new route
@@ -175,22 +180,32 @@ const router: Router = (port?: number | string, options?: Options) => {
         // start the server
         serve: () => {
             lgr.start(port ?? 3000);
+            let opts: Options = {db: ':memory:'};
+
             Bun.serve({
                 port: port ?? 3000,
                 ...options,
-                fetch(req) {
+                async fetch(req) {
                     const url = new URL(req.url);
+                    
+                    //? ????
+                    if (options) {
+                        let o = options as Options;
+                        opts.db = o.db;
+                    }
                     for (const route of routes) {
                         const ctx: Context = {
                             request: req,
                             params: new Map(),
+                            db: new Database(opts.db ?? ':memory:'),
                         };
 
                         if (url.pathname === '/favicon.ico') return noContent();
 
                         if (match(route, ctx)) {
-                            lgr.info(200, route.pattern, route.method)
-                            return route.callback(ctx);
+                            const res = await route.callback(ctx);
+                            lgr.info(res.status, url.pathname, route.method); 
+                            return res;
                         }
                     }
                     lgr.info(404, url.pathname, req.method, 'not found');
