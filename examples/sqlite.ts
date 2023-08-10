@@ -1,5 +1,4 @@
 import { router, json } from '..';
-import { Database } from 'bun:sqlite';
 
 const r = router(3000, {db: './examples/dbs/test.db'});
 
