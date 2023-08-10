@@ -171,3 +171,7 @@ dist
 # Not ready
 lib/markdown/
 lib/http/
+
+# IDE
+.idea
+.vscode
