@@ -53,7 +53,7 @@ const logger = (): Logger => {
             const { stamp } = timestamp((new Date(Date.now())));
             const source = color('green', 'bgBlack', `[bun-router ${stamp}]`);
             const rp = color('white', 'bgBlack', routePath);
-            const msg = `${source}: ${colorCode(statusCode)}: ${rp} ${(method === 'GET') ? '->' : '<-'} ${method}\n`
+            const msg = `${source}: ${colorCode(statusCode)}: ${rp} ${(method === 'GET') ? '->' : '<-'} ${method}${' | ' +message ?? ''}\n`
 
             await Bun.write(Bun.stdout, msg);
 
@@ -75,6 +75,15 @@ const logger = (): Logger => {
             const msgColor = color('yellow', 'bgBlack', msg);
             msg = `${source} : ${msgColor}\n`;
             await Bun.write(Bun.stdout, msg);
+        },
+        message: async (msg: string) => {
+            const { stamp } = timestamp((new Date(Date.now())));
+            const source = color('black', 'bgCyan', `[message ${stamp}]`);
+            const msgColor = color('yellow', 'bgBlack', msg);
+            msg = `${source}: ${msgColor}\n`;
+            await Bun.write(Bun.stdout, msg);
+
+            messages.push(clean(msg));
         }
     }
 }

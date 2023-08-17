@@ -1,5 +1,6 @@
 import { Database } from 'bun:sqlite';
 import { Route, Router, Context, RouterOptions, Options } from './router.d';
+import { httpStatusCodes } from '../http/status';
 import { readDir } from '../fs/fsys';
 import { logger } from '../logger/logger';
 import path from 'path';
@@ -9,7 +10,7 @@ const httpMessage = async (status: number, msg?: string): Promise<Response> => {
     const response = new Response(msg ?? '?', {
         status: status,
         statusText: msg ?? '?',
-        headers: {'Content-Type': 'text/html; charset-uft-8'}
+        headers: { 'Content-Type': 'text/html; charset-uft-8' }
     });
     return new Promise((resolve) => {
         resolve(response);
@@ -127,7 +128,7 @@ const match = (route: Route, ctx: Context): boolean => {
     const patternRegex = new RegExp('^' + route.pattern.replace(/:[^/]+/g, '([^/]+)') + '$');
     const matches = url.pathname.match(patternRegex);
 
-    if (matches) {
+    if (matches && route.method === ctx.request.method) {
         const extractor = extract(route, ctx);
         extractor?.params();
 
@@ -152,6 +153,20 @@ const router: Router = (port?: number | string, options?: RouterOptions<Options>
                 method: method,
                 callback: callback,
             })
+        },
+        GET: (pattern: string, callback: (ctx: Context) => Response | Promise<Response>) => {
+            routes.push({
+                pattern: pattern,
+                method: 'GET',
+                callback: callback,
+            });
+        },
+        POST: (pattern: string, callback: (ctx: Context) => Response | Promise<Response>) => {
+            routes.push({
+                pattern: pattern,
+                method: 'POST',
+                callback: callback,
+            });
         },
         // add a route for static files
         static: async (pattern: string, root: string) => {
@@ -180,36 +195,60 @@ const router: Router = (port?: number | string, options?: RouterOptions<Options>
         // start the server
         serve: () => {
             lgr.start(port ?? 3000);
-            let opts: Options = {db: ':memory:'};
+            let opts: Options = { db: ':memory:' };
 
             Bun.serve({
                 port: port ?? 3000,
                 ...options,
                 async fetch(req) {
                     const url = new URL(req.url);
-                    
-                    //? ????
+
                     if (options) {
                         let o = options as Options;
                         opts.db = o.db;
                     }
+
+                    let statusCode = 404; // Default status code for route not found
+
                     for (const route of routes) {
                         const ctx: Context = {
                             request: req,
                             params: new Map(),
                             db: new Database(opts.db ?? ':memory:'),
+                            logger: lgr,
                         };
 
-                        if (url.pathname === '/favicon.ico') return noContent();
+                        if (url.pathname === '/favicon.ico') {
+                            return noContent();
+                        }
+
+                        if (route.method !== req.method) {
+                            statusCode = 405;
+                            continue;
+                        }
 
                         if (match(route, ctx)) {
                             const res = await route.callback(ctx);
-                            lgr.info(res.status, url.pathname, route.method); 
-                            return res;
+                            if (res) {
+                                statusCode = 200;
+                                lgr.info(statusCode, url.pathname, req.method, httpStatusCodes[statusCode]);
+                                return res
+                            } else {
+                                statusCode = 500;
+                                break;
+                            }
                         }
                     }
-                    lgr.info(404, url.pathname, req.method, 'not found');
-                    return httpMessage(404, 'not found');
+
+                    if (statusCode === 405) {
+                        lgr.info(statusCode, url.pathname, req.method, httpStatusCodes[statusCode]);
+                        return httpMessage(statusCode, httpStatusCodes[statusCode]);
+                    }
+
+                    // Handle route not found (404)
+                    lgr.info(statusCode, url.pathname, req.method, httpStatusCodes[statusCode]);
+                    return httpMessage(statusCode, httpStatusCodes[statusCode]);
+
                 }
             });
         },
