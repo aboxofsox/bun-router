@@ -15,19 +15,15 @@ const timestamp = (date: Date) => {
 }
 
 // append ANSI color escape sequences to a string based on the given HTTP status code.
-const colorCode = (n: number, text?: string): string => {
+const colorCode = (n: number, text?:string): string => {
     const s = ` [${String(n)}${text ?? ''}] `;
-    let backgroundColor = 'bgBlack';
-    let foregroundColor = 'white';
-
-    if (n < 100) backgroundColor = 'bgYellow';
-    else if (n < 200) backgroundColor = 'bgCyan';
-    else if (n < 300) backgroundColor = 'bgGreen';
-    else if (n < 400) backgroundColor = 'bgRed';
-    else if (n < 500) backgroundColor = 'bgRed';
-    else foregroundColor = 'white';
-
-    return color(foregroundColor, backgroundColor, s).trim();
+    if (n < 100) return color('black', 'bgYellow', s);
+    else if (n >= 100 && n < 200) return color('black', 'bgCyan', s);
+    else if (n >= 200 && n < 300) return color('black', 'bgGreen', s);
+    else if (n >= 300 && n < 400) return color('black', 'bgRed', s);
+    else if (n >= 400 && n < 500) return color('black', 'bgRed', s);
+    else if (n >= 500) return color('white', 'bgRed', s);
+    return color('white', 'bgBlack', `[${s}]`).trim();
 }
 
 
