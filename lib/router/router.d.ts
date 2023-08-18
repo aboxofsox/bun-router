@@ -1,4 +1,5 @@
 import { TLSOptions, TLSWebSocketServeOptions, WebSocketServeOptions, ServeOptions, TLSServeOptions } from 'bun';
+import { Logger } from '../logger/logger';
 import { Database } from 'bun:sqlite';
 
 
@@ -7,6 +8,7 @@ type Context = {
     params: Map<string, string>,
     token?: string,
     db: Database,
+    logger: Logger,
 }
 
 type Route = {
@@ -28,6 +30,8 @@ type RouterOptions<Options> = ServeOptions
 
 type Router = (port?: number | string, options?: RouterOptions) => {
     add: (pattern: string, method: string, callback: (req: Context) => Response | Promise<Response>) => void,
+    GET: (pattern: string, callback: (ctx: Context) => Response | Promise<Response>) => void,
+    POST: (pattern: string, callback: (ctx: Context) => Response | Promise<Response>) => void,
     static: (pattern: string, root: string) => void,
     serve: () => void,
 }
