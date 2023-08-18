@@ -1,4 +1,5 @@
-import { router, html, Context } from '..';
+import { router, html } from '..';
+import { Context } from '../lib/router/router.d';
 
 const handler = (ctx: Context) => {
     const name = ctx.params.get('name');

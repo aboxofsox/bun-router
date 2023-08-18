@@ -4,6 +4,7 @@ import { httpStatusCodes } from '../http/status';
 import { readDir } from '../fs/fsys';
 import { logger } from '../logger/logger';
 import path from 'path';
+import { Logger } from '../logger/logger.d';
 
 // create a generic HTTP response
 const httpMessage = async (status: number, msg?: string): Promise<Response> => {
@@ -138,6 +139,15 @@ const match = (route: Route, ctx: Context): boolean => {
     return false;
 }
 
+const setContext = (req: Request, lgr: Logger, opts: Options): Context => {
+    return {
+        request: req,
+        params: new Map(),
+        db: new Database(opts.db ?? ':memory:'),
+        logger: lgr,
+    }
+}
+
 
 
 const router: Router = (port?: number | string, options?: RouterOptions<Options>) => {
@@ -211,12 +221,7 @@ const router: Router = (port?: number | string, options?: RouterOptions<Options>
                     let statusCode = 404; // Default status code for route not found
 
                     for (const route of routes) {
-                        const ctx: Context = {
-                            request: req,
-                            params: new Map(),
-                            db: new Database(opts.db ?? ':memory:'),
-                            logger: lgr,
-                        };
+                        const ctx = setContext(req, lgr, opts);
 
                         if (url.pathname === '/favicon.ico') {
                             return noContent();
@@ -245,7 +250,6 @@ const router: Router = (port?: number | string, options?: RouterOptions<Options>
                         return httpMessage(statusCode, httpStatusCodes[statusCode]);
                     }
 
-                    // Handle route not found (404)
                     lgr.info(statusCode, url.pathname, req.method, httpStatusCodes[statusCode]);
                     return httpMessage(statusCode, httpStatusCodes[statusCode]);
 
