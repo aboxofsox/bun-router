@@ -5,7 +5,7 @@ import { readDir } from '../fs/fsys';
 import { logger } from '../logger/logger';
 import path from 'path';
 import { Logger } from '../logger/logger.d';
-import { http } from '../http/status-methods';
+import { http } from '../http/generic-methods';
 
 // extract dynamic URL parameters
 // if the route pattern is /:foo and the request URL is /bar: {foo: 'bar'}
