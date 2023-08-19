@@ -5,100 +5,7 @@ import { readDir } from '../fs/fsys';
 import { logger } from '../logger/logger';
 import path from 'path';
 import { Logger } from '../logger/logger.d';
-
-// create a generic HTTP response
-const httpMessage = async (status: number, msg?: string): Promise<Response> => {
-    const response = new Response(msg ?? '?', {
-        status: status,
-        statusText: msg ?? '?',
-        headers: { 'Content-Type': 'text/html; charset-uft-8' }
-    });
-    return new Promise((resolve) => {
-        resolve(response);
-    });
-};
-
-// a generic 'not found' HTTP response
-const notFound = async (msg?: string): Promise<Response> => {
-    const response = new Response(msg ?? 'not found', {
-        status: 404,
-        statusText: 'not found',
-        headers: { 'Content-Type': 'text/html' },
-    });
-
-    return new Promise((resolve) => {
-        resolve(response);
-    });
-}
-
-// a generic 'no content' HTTP response
-const noContent = async (): Promise<Response> => {
-    const response = new Response('no content', {
-        status: 204,
-        statusText: 'no content',
-    });
-
-    return new Promise((resolve) => {
-        resolve(response);
-    });
-}
-
-// IO handling
-const file = async (filepath: string): Promise<Response> => {
-    const file = Bun.file(filepath);
-    const exists = await file.exists();
-
-    // check if the file exists, return 'not found' if it doesn't.
-    if (!exists)
-        return notFound(`File not found: ${filepath}`);
-
-    // get the content of the file as an ArrayBuffer
-    const content = await file.arrayBuffer();
-    if (!content)
-        return noContent();
-
-    // default Content-Type + encoding
-    let contentType = 'text/html; charset=utf-8';
-
-    // change the Content-Type if the file type is an image.
-    // file.type provides the necessary Content-Type
-    if (file.type.includes('image')) {
-        contentType = file.type + '; charset=utf-8';
-    }
-
-    // create a new response with the necessary criteria
-    const response = new Response(content, {
-        status: 200,
-        statusText: 'ok',
-        headers: { 'Content-Type': contentType },
-    });
-
-    return Promise.resolve(response);
-}
-
-// handle strings as HTML
-const html = async (content: string): Promise<Response> => {
-    const response = new Response(content, {
-        status: 200,
-        statusText: 'ok',
-        headers: { 'Content-Type': 'text/html; charset=utf-8' },
-    });
-
-    // escape the HTML
-    content = Bun.escapeHTML(content);
-
-    return Promise.resolve(response);
-}
-
-// create a JSON response
-const json = (data: any): Response => {
-    const jsonString = JSON.stringify(data);
-
-    const res = new Response(jsonString);
-    res.headers.set('Content-Type', 'application/json');
-
-    return res
-}
+import { http } from '../http/generic-methods';
 
 // extract dynamic URL parameters
 // if the route pattern is /:foo and the request URL is /bar: {foo: 'bar'}
@@ -139,6 +46,7 @@ const match = (route: Route, ctx: Context): boolean => {
     return false;
 }
 
+// set the context for the reuest
 const setContext = (req: Request, lgr: Logger, opts: Options): Context => {
     return {
         request: req,
@@ -197,7 +105,7 @@ const router: Router = (port?: number | string, options?: RouterOptions<Options>
                 const route: Route = {
                     pattern: patternPath,
                     method: 'GET',
-                    callback: async () => await file(pure),
+                    callback: async () => await http.file(pure),
                 };
                 routes.push(route);
             });
@@ -224,7 +132,7 @@ const router: Router = (port?: number | string, options?: RouterOptions<Options>
                         const ctx = setContext(req, lgr, opts);
 
                         if (url.pathname === '/favicon.ico') {
-                            return noContent();
+                            return http.noContent();
                         }
 
                         if (route.method !== req.method) {
@@ -247,11 +155,11 @@ const router: Router = (port?: number | string, options?: RouterOptions<Options>
 
                     if (statusCode === 405) {
                         lgr.info(statusCode, url.pathname, req.method, httpStatusCodes[statusCode]);
-                        return httpMessage(statusCode, httpStatusCodes[statusCode]);
+                        return http.message(statusCode, httpStatusCodes[statusCode]);
                     }
 
                     lgr.info(statusCode, url.pathname, req.method, httpStatusCodes[statusCode]);
-                    return httpMessage(statusCode, httpStatusCodes[statusCode]);
+                    return http.message(statusCode, httpStatusCodes[statusCode]);
 
                 }
             });
@@ -260,4 +168,4 @@ const router: Router = (port?: number | string, options?: RouterOptions<Options>
 }
 
 
-export { router, json, file, extract, html }
+export { router, extract, http }
