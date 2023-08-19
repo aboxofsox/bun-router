@@ -33,7 +33,7 @@ const http = {
     
         return Promise.resolve(new Response(content, {
             status: 200,
-            statusText: 'ok',
+            statusText: httpStatusCodes[200],
             headers: { 'Content-Type': contentType}
         }));
     },
@@ -44,7 +44,7 @@ const http = {
     notFound: async(msg?: string): Promise<Response> => {
         const response = new Response(msg ?? 'not found', {
             status: 404,
-            statusText: 'not found',
+            statusText: httpStatusCodes[404],
             headers: {'Content-Type': 'text/html'},
         });
     
@@ -53,7 +53,7 @@ const http = {
     message:  async (status: number, msg?: string): Promise<Response> => {
         const response = new Response(msg ?? '?', {
             status: status,
-            statusText: msg ?? '?',
+            statusText: httpStatusCodes[status],
             headers: {'Content-Type': 'text/html; charset-utf-8'},
         });
         return Promise.resolve(response)
