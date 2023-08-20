@@ -17,7 +17,7 @@ const todo = Todo();
 
 const r = router();
 
-r.add('/new', 'POST', ctx => {
+r.add('/api/new', 'POST', ctx => {
     const query = new URL(ctx.request.url).searchParams;
     const key = query.get('key');
     const content = query.get('content');
