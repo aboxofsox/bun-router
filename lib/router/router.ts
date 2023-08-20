@@ -133,7 +133,7 @@ const router: Router = (port?: number | string, options?: RouterOptions<Options>
                     let statusCode = 404;
 
                     for (const route of routes) {
-                        const ctx = setContext(req, lgr, opts, route); //! ??
+                        const ctx = setContext(req, lgr, opts, route);
 
                         if (match(route, ctx) || route.pattern === url.pathname) {
                             if (route.method === ctx.request.method) {
