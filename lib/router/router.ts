@@ -1,9 +1,9 @@
+import path from 'path';
 import { Database } from 'bun:sqlite';
 import { Route, Router, Context, RouterOptions, Options } from './router.d';
 import { httpStatusCodes } from '../http/status';
 import { readDir } from '../fs/fsys';
 import { logger } from '../logger/logger';
-import path from 'path';
 import { Logger } from '../logger/logger.d';
 import { http } from '../http/generic-methods';
 
@@ -46,7 +46,6 @@ const match = (route: Route, ctx: Context): boolean => {
     return false;
 }
 
-
 // set the context for the reuest
 const setContext = (req: Request, lgr: Logger, opts: Options, route: Route): Context => {
     return {
@@ -58,8 +57,6 @@ const setContext = (req: Request, lgr: Logger, opts: Options, route: Route): Con
         json: (data: any) => http.json(data),
     }
 }
-
-
 
 const router: Router = (port?: number | string, options?: RouterOptions<Options>) => {
     const routes: Array<Route> = new Array();
@@ -139,18 +136,17 @@ const router: Router = (port?: number | string, options?: RouterOptions<Options>
                             if (route.method === ctx.request.method) {
                                 const res = await route.callback(ctx);
                                 statusCode = res.status;
-                 
                                 lgr.info(res.status, route.pattern, req.method, httpStatusCodes[res.status]);
                                 return Promise.resolve(res);
                             } else {
-                                lgr.info(405, route.pattern, req.method, httpStatusCodes[405])
-                                return Promise.resolve(new Response(httpStatusCodes[405], {
+                                const res = new Response(httpStatusCodes[405], {
                                     status: 405,
-                                    statusText: httpStatusCodes[405],
-                                }));
+                                    statusText: httpStatusCodes[305]
+                                });
+                                lgr.info(405, route.pattern, req.method, httpStatusCodes[405])
+                                return Promise.resolve(res);
                             }
-                        }
-                        
+                        }  
                     }
 
                     lgr.info(statusCode, url.pathname, req.method, httpStatusCodes[statusCode]);
