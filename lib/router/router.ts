@@ -1,9 +1,9 @@
+import path from 'path';
 import { Database } from 'bun:sqlite';
 import { Route, Router, Context, RouterOptions, Options } from './router.d';
 import { httpStatusCodes } from '../http/status';
 import { readDir } from '../fs/fsys';
 import { logger } from '../logger/logger';
-import path from 'path';
 import { Logger } from '../logger/logger.d';
 import { http } from '../http/generic-methods';
 
@@ -47,16 +47,16 @@ const match = (route: Route, ctx: Context): boolean => {
 }
 
 // set the context for the reuest
-const setContext = (req: Request, lgr: Logger, opts: Options): Context => {
+const setContext = (req: Request, lgr: Logger, opts: Options, route: Route): Context => {
     return {
         request: req,
         params: new Map(),
         db: new Database(opts.db ?? ':memory:'),
         logger: lgr,
+        route: route,
+        json: (data: any) => http.json(data),
     }
 }
-
-
 
 const router: Router = (port?: number | string, options?: RouterOptions<Options>) => {
     const routes: Array<Route> = new Array();
@@ -107,6 +107,7 @@ const router: Router = (port?: number | string, options?: RouterOptions<Options>
                     method: 'GET',
                     callback: async () => await http.file(pure),
                 };
+
                 routes.push(route);
             });
         },
@@ -126,41 +127,30 @@ const router: Router = (port?: number | string, options?: RouterOptions<Options>
                         opts.db = o.db;
                     }
 
-                    let statusCode = 404; // Default status code for route not found
+                    let statusCode = 404;
 
                     for (const route of routes) {
-                        const ctx = setContext(req, lgr, opts);
+                        const ctx = setContext(req, lgr, opts, route);
 
-                        if (url.pathname === '/favicon.ico') {
-                            return http.noContent();
-                        }
-
-                        if (route.method !== req.method) {
-                            statusCode = 405;
-                            continue;
-                        }
-
-                        if (match(route, ctx)) {
-                            const res = await route.callback(ctx);
-                            if (res) {
-                                statusCode = 200;
-                                lgr.info(statusCode, url.pathname, req.method, httpStatusCodes[statusCode]);
-                                return res
+                        if (match(route, ctx) || route.pattern === url.pathname) {
+                            if (route.method === ctx.request.method) {
+                                const res = await route.callback(ctx);
+                                statusCode = res.status;
+                                lgr.info(res.status, route.pattern, req.method, httpStatusCodes[res.status]);
+                                return Promise.resolve(res);
                             } else {
-                                statusCode = 500;
-                                break;
+                                const res = new Response(httpStatusCodes[405], {
+                                    status: 405,
+                                    statusText: httpStatusCodes[305]
+                                });
+                                lgr.info(405, route.pattern, req.method, httpStatusCodes[405])
+                                return Promise.resolve(res);
                             }
-                        }
-                    }
-
-                    if (statusCode === 405) {
-                        lgr.info(statusCode, url.pathname, req.method, httpStatusCodes[statusCode]);
-                        return http.message(statusCode, httpStatusCodes[statusCode]);
+                        }  
                     }
 
                     lgr.info(statusCode, url.pathname, req.method, httpStatusCodes[statusCode]);
-                    return http.message(statusCode, httpStatusCodes[statusCode]);
-
+                    return Promise.resolve(http.message(statusCode, httpStatusCodes[statusCode]));
                 }
             });
         },

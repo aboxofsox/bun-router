@@ -5,10 +5,12 @@ import { Database } from 'bun:sqlite';
 
 type Context = {
     request: Request,
+    route: Route,
     params: Map<string, string>,
     token?: string,
     db: Database,
     logger: Logger,
+    json: (data: any) => Response | Promise<Response>,
 }
 
 type Route = {
