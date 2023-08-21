@@ -7,6 +7,7 @@ type Context = {
     request: Request,
     route: Route,
     params: Map<string, string>,
+    query: URLSearchParams,
     token?: string,
     db: Database,
     logger: Logger,
