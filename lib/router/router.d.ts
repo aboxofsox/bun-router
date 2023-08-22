@@ -4,15 +4,17 @@ import { Database } from 'bun:sqlite';
 
 
 type Context = {
-    request: Request,
-    route: Route,
+    db: Database,
+    formData: FormData | Promise<FormData> | undefined,
+    json: (data: any) => Response | Promise<Response>,
+    logger: Logger,
     params: Map<string, string>,
     query: URLSearchParams,
+    request: Request,
+    route: Route,
     token?: string,
-    db: Database,
-    logger: Logger,
-    json: (data: any) => Response | Promise<Response>,
-}
+};
+
 
 type Route = {
     pattern: string,
