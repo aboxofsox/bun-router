@@ -49,8 +49,10 @@ const match = (route: Route, ctx: Context): boolean => {
 // set the context for the reuest
 const setContext = (req: Request, lgr: Logger, opts: Options, route: Route): Context => {
     return {
+        formData: req.formData(),
         request: req,
         params: new Map(),
+        query: new URL(req.url).searchParams,
         db: new Database(opts.db ?? ':memory:'),
         logger: lgr,
         route: route,
@@ -61,7 +63,6 @@ const setContext = (req: Request, lgr: Logger, opts: Options, route: Route): Con
 const router: Router = (port?: number | string, options?: RouterOptions<Options>) => {
     const routes: Array<Route> = new Array();
     const lgr = logger();
-    let dbConn = '';
 
     return {
         // add a new route
