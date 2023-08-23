@@ -26,7 +26,7 @@ r.add('/api/new', 'POST', ctx => {
     ctx.logger.message(`Adding ${key} with ${content}`);
     todo.add(key, content);
 
-    return ctx.json({ message: 'ok' });
+    return ctx.json(200, { message: 'ok' });
 });
 
 r.add('/api/todo/:key', 'GET', ctx => {
@@ -36,11 +36,11 @@ r.add('/api/todo/:key', 'GET', ctx => {
     const content = todo.get(key);
     if (!content) return http.notFound();
 
-    return ctx.json({key: key, content: content});
+    return ctx.json(200, {key: key, content: content});
 });
 
 r.add('/api/get/all', 'GET', ctx => {
-    return ctx.json(todo.export());
+    return ctx.json(200, todo.export());
 });
 
 r.serve();

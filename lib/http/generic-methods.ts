@@ -1,23 +1,23 @@
 import { httpStatusCodes } from "./status";
 
 const http = {
-    json: async (data: any): Promise<Response> => {
+    json: async (statusCode: number, data: any): Promise<Response> => {
         const jsonString = JSON.stringify(data);
         return Promise.resolve(new Response(jsonString, {
-            status: 200,
-            statusText: httpStatusCodes[200],
+            status: statusCode,
+            statusText: httpStatusCodes[statusCode],
             headers: {'Content-Type': 'application/json'},
         }));
     },
-    html: async (content: string): Promise<Response> => {
+    html: async (statusCode: number, content: string): Promise<Response> => {
         content = Bun.escapeHTML(content);
         return Promise.resolve(new Response(Bun.escapeHTML(content), {
-            status: 200,
-            statusText: httpStatusCodes[200],
+            status: statusCode,
+            statusText: httpStatusCodes[statusCode],
             headers: {'Content-Type': 'text/html; charset=utf-8'}
         }));
     },
-    file: async (fp: string): Promise<Response> => {
+    file: async (statusCode: number, fp: string): Promise<Response> => {
         const file = Bun.file(fp);
         const exists = await file.exists();
     
@@ -32,8 +32,8 @@ const http = {
             contentType = file.type + '; charset=utf-8';
     
         return Promise.resolve(new Response(content, {
-            status: 200,
-            statusText: httpStatusCodes[200],
+            status: statusCode,
+            statusText: httpStatusCodes[statusCode],
             headers: { 'Content-Type': contentType}
         }));
     },
@@ -57,8 +57,7 @@ const http = {
             headers: {'Content-Type': 'text/html; charset-utf-8'},
         });
         return Promise.resolve(response)
-    }
-
+    }, 
 }
 
 export { http }

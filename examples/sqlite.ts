@@ -8,7 +8,7 @@ r.add('/u/new/:name', 'GET', (ctx) => {
 
     ctx.db.run(`INSERT INTO test VALUES(${rando}, "${name}")`);
 
-    return http.json({message: 'ok'});
+    return http.json(200, {message: 'ok'});
 });
 
 r.add('/u/:name', 'GET', (ctx) => {
@@ -16,7 +16,7 @@ r.add('/u/:name', 'GET', (ctx) => {
     const data = ctx.db.query(`SELECT * FROM test WHERE name = "${name}";`).get();
     const d = data as {id: number, name: string};
 
-    return d ? http.json(d) : new Response('not found', {status: 404});
+    return d ? http.json(200, d) : new Response('not found', {status: 404});
 });
 
 r.serve();

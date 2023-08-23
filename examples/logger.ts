@@ -8,9 +8,9 @@ r.add('/:foo', 'GET', (ctx) => {
     const foo = ctx.params.get('foo');
     if (!foo) {
         log.error(500, url.pathname, ctx.request.method, new Error('undefined'));
-        return http.json({status: 500, text: 'Foo is undefined'});
+        return http.json(500,{text: 'Foo is undefined'});
     }
-    return http.html(`<h4 style='font-family: sans-serif;'>Oh hello, ${foo}</h4>`)
+    return http.html(200, `<h4 style='font-family: sans-serif;'>Oh hello, ${foo}</h4>`)
 });
 
 r.serve();

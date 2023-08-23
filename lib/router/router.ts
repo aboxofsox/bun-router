@@ -48,7 +48,10 @@ const match = (route: Route, ctx: Context): boolean => {
 
 // set the context for the reuest
 const setContext = (req: Request, lgr: Logger, opts: Options, route: Route): Context => {
+    const token = req.headers.get('Authorization');
     return {
+        token: token ?? '',
+        cookies: new Map(),
         formData: req.formData(),
         request: req,
         params: new Map(),
@@ -56,7 +59,7 @@ const setContext = (req: Request, lgr: Logger, opts: Options, route: Route): Con
         db: new Database(opts.db ?? ':memory:'),
         logger: lgr,
         route: route,
-        json: (data: any) => http.json(data),
+        json: (statusCode: number, data: any) => http.json(statusCode, data),
     }
 }
 
@@ -106,7 +109,7 @@ const router: Router = (port?: number | string, options?: RouterOptions<Options>
                 const route: Route = {
                     pattern: patternPath,
                     method: 'GET',
-                    callback: async () => await http.file(pure),
+                    callback: async () => await http.file(200, pure),
                 };
 
                 routes.push(route);
@@ -136,18 +139,29 @@ const router: Router = (port?: number | string, options?: RouterOptions<Options>
                         if (match(route, ctx) || route.pattern === url.pathname) {
                             if (route.method === ctx.request.method) {
                                 const res = await route.callback(ctx);
+
+                                let cookieValue: string[] = [];
+                                if (ctx.cookies.size !== 0) {
+                                    for (const [key, value] of ctx.cookies) {
+                                        cookieValue.push(`${key}=${value}`);
+                                    }
+                                }
+
+                                res.headers.set('Set-Cookie', cookieValue.join('; '));
+
                                 statusCode = res.status;
+
                                 lgr.info(res.status, route.pattern, req.method, httpStatusCodes[res.status]);
                                 return Promise.resolve(res);
                             } else {
                                 const res = new Response(httpStatusCodes[405], {
                                     status: 405,
-                                    statusText: httpStatusCodes[305]
+                                    statusText: httpStatusCodes[405]
                                 });
                                 lgr.info(405, route.pattern, req.method, httpStatusCodes[405])
                                 return Promise.resolve(res);
                             }
-                        }  
+                        }
                     }
 
                     lgr.info(statusCode, url.pathname, req.method, httpStatusCodes[statusCode]);

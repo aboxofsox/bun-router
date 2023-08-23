@@ -4,9 +4,10 @@ import { Database } from 'bun:sqlite';
 
 
 type Context = {
+    cookies: Map<string, string>,
     db: Database,
     formData: FormData | Promise<FormData> | undefined,
-    json: (data: any) => Response | Promise<Response>,
+    json: (statusCode: number, data: any) => Response | Promise<Response>,
     logger: Logger,
     params: Map<string, string>,
     query: URLSearchParams,
@@ -40,6 +41,7 @@ type Router = (port?: number | string, options?: RouterOptions) => {
     static: (pattern: string, root: string) => void,
     serve: () => void,
 }
+
 
 
 export { Context , Route, Router, RouterOptions, Options }
