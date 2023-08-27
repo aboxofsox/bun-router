@@ -1,17 +1,16 @@
 import path from 'path';
 import { Database } from 'bun:sqlite';
-import { Route, Router, Context, RouterOptions, Options } from './router.d';
+import { Route, Router, Context, RouterOptions, Options, HttpHandler } from './router.d';
 import { httpStatusCodes } from '../http/status';
 import { readDir } from '../fs/fsys';
 import { logger } from '../logger/logger';
 import { Logger } from '../logger/logger.d';
 import { http } from '../http/generic-methods';
+import {Radix, createContext} from './tree';
 
-// extract dynamic URL parameters
-// if the route pattern is /:foo and the request URL is /bar: {foo: 'bar'}
-const extract = (route: Route, ctx: Context) => {
+const extract = (path: string, ctx: Context) => {
     const url = new URL(ctx.request.url);
-    const pathSegments = route.pattern.split('/');
+    const pathSegments = path.split('/');
     const urlSegments = url.pathname.split('/');
 
     if (pathSegments.length !== urlSegments.length) return
@@ -19,10 +18,10 @@ const extract = (route: Route, ctx: Context) => {
     return {
         params: () => {
             for (let i = 0; i < pathSegments.length; i++) {
-                if ((pathSegments[i][0] === ':')) {
+                if((pathSegments[i][0] === ':')) {
                     const k = pathSegments[i].replace(':', '');
                     const v = urlSegments[i];
-                    ctx.params.set(k, v);
+                    ctx.params.set(k,v);
                 }
             }
         }
@@ -30,65 +29,14 @@ const extract = (route: Route, ctx: Context) => {
 
 }
 
-// ensure the route pattern matches the request URL
-const match = (route: Route, ctx: Context): boolean => {
-    const url = new URL(ctx.request.url);
-    const patternRegex = new RegExp('^' + route.pattern.replace(/:[^/]+/g, '([^/]+)') + '$');
-    const matches = url.pathname.match(patternRegex);
-
-    if (matches && route.method === ctx.request.method) {
-        const extractor = extract(route, ctx);
-        extractor?.params();
-
-        return true;
-    }
-
-    return false;
-}
-
-// set the context for the reuest
-const setContext = (req: Request, lgr: Logger, opts: Options, route: Route): Context => {
-    const token = req.headers.get('Authorization');
-    return {
-        token: token ?? '',
-        cookies: new Map(),
-        formData: req.formData(),
-        request: req,
-        params: new Map(),
-        query: new URL(req.url).searchParams,
-        db: new Database(opts.db ?? ':memory:'),
-        logger: lgr,
-        route: route,
-        json: (statusCode: number, data: any) => http.json(statusCode, data),
-    }
-}
-
 const router: Router = (port?: number | string, options?: RouterOptions<Options>) => {
-    const routes: Array<Route> = new Array();
+    const routes = Radix();
     const lgr = logger();
 
     return {
         // add a new route
-        add: (pattern: string, method: string, callback: (ctx: Context) => Response | Promise<Response>) => {
-            routes.push({
-                pattern: pattern,
-                method: method,
-                callback: callback,
-            })
-        },
-        GET: (pattern: string, callback: (ctx: Context) => Response | Promise<Response>) => {
-            routes.push({
-                pattern: pattern,
-                method: 'GET',
-                callback: callback,
-            });
-        },
-        POST: (pattern: string, callback: (ctx: Context) => Response | Promise<Response>) => {
-            routes.push({
-                pattern: pattern,
-                method: 'POST',
-                callback: callback,
-            });
+        add: (pattern: string, method: string, callback: HttpHandler) => {
+            routes.addRoute(pattern, callback);
         },
         // add a route for static files
         static: async (pattern: string, root: string) => {
@@ -109,10 +57,10 @@ const router: Router = (port?: number | string, options?: RouterOptions<Options>
                 const route: Route = {
                     pattern: patternPath,
                     method: 'GET',
-                    callback: async () => await http.file(200, pure),
+                    handler: async () => await http.file(200, pure),
                 };
 
-                routes.push(route);
+                routes.addRoute(route.pattern, route.handler);
             });
         },
         // start the server
@@ -133,36 +81,18 @@ const router: Router = (port?: number | string, options?: RouterOptions<Options>
 
                     let statusCode = 404;
 
-                    for (const route of routes) {
-                        const ctx = setContext(req, lgr, opts, route);
+                    let path = url.pathname;
 
-                        if (match(route, ctx) || route.pattern === url.pathname) {
-                            if (route.method === ctx.request.method) {
-                                const res = await route.callback(ctx);
+                    const route = routes.findRoute(path);
 
-                                let cookieValue: string[] = [];
-                                if (ctx.cookies.size !== 0) {
-                                    for (const [key, value] of ctx.cookies) {
-                                        cookieValue.push(`${key}=${value}`);
-                                    }
-                                }
+                    if (route) {
+                        const context = createContext(path, route, req);
+                        const response = await route.handler(context);
 
-                                res.headers.set('Set-Cookie', cookieValue.join('; '));
-
-                                statusCode = res.status;
-
-                                lgr.info(res.status, route.pattern, req.method, httpStatusCodes[res.status]);
-                                return Promise.resolve(res);
-                            } else {
-                                const res = new Response(httpStatusCodes[405], {
-                                    status: 405,
-                                    statusText: httpStatusCodes[405]
-                                });
-                                lgr.info(405, route.pattern, req.method, httpStatusCodes[405])
-                                return Promise.resolve(res);
-                            }
-                        }
+                        lgr.info(response.status, url.pathname, req.method, httpStatusCodes[response.status]);
+                        return Promise.resolve(response);
                     }
+
 
                     lgr.info(statusCode, url.pathname, req.method, httpStatusCodes[statusCode]);
                     return Promise.resolve(http.message(statusCode, httpStatusCodes[statusCode]));

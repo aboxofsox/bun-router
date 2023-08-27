@@ -10,8 +10,7 @@ const http = {
         }));
     },
     html: async (statusCode: number, content: string): Promise<Response> => {
-        content = Bun.escapeHTML(content);
-        return Promise.resolve(new Response(Bun.escapeHTML(content), {
+        return Promise.resolve(new Response(content, {
             status: statusCode,
             statusText: httpStatusCodes[statusCode],
             headers: {'Content-Type': 'text/html; charset=utf-8'}

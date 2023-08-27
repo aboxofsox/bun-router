@@ -10,7 +10,7 @@ const handler = (ctx: Context) => {
 const space = (ctx: Context) => {
     const name = ctx.params.get('name');
     if (typeof name === 'undefined' || name === '') return http.html(404, `<h6 style="color: red">Space [${name}] Not Found</h6>`);
-    return http.html(200, `<h4>Welcome to ${name}!`)
+    return http.html(200, `<h4>Welcome to ${name}!</h4>`)
 }
 
 const handleSettings = (ctx: Context) => {
