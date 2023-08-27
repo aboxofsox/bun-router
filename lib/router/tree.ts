@@ -91,15 +91,7 @@ const Radix = () => {
         return current;
     }
 
-    const serve = (path: string, context: Context) => {
-        const route = findRoute(path);
-
-        if (!route) return new Response('not found');
-
-        route.handler(context);
-    }
-
-    return {addRoute, findRoute, serve}
+    return {addRoute, findRoute }
 
 };
 
