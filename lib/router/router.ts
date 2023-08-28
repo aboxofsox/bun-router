@@ -1,17 +1,15 @@
 import path from 'path';
 import { Database } from 'bun:sqlite';
-import { Route, Router, Context, RouterOptions, Options } from './router.d';
+import { Route, Router, Context, RouterOptions, Options, HttpHandler } from './router.d';
 import { httpStatusCodes } from '../http/status';
 import { readDir } from '../fs/fsys';
 import { logger } from '../logger/logger';
-import { Logger } from '../logger/logger.d';
 import { http } from '../http/generic-methods';
+import {Radix, createContext} from './tree';
 
-// extract dynamic URL parameters
-// if the route pattern is /:foo and the request URL is /bar: {foo: 'bar'}
-const extract = (route: Route, ctx: Context) => {
+const extract = (path: string, ctx: Context) => {
     const url = new URL(ctx.request.url);
-    const pathSegments = route.pattern.split('/');
+    const pathSegments = path.split('/');
     const urlSegments = url.pathname.split('/');
 
     if (pathSegments.length !== urlSegments.length) return
@@ -19,10 +17,10 @@ const extract = (route: Route, ctx: Context) => {
     return {
         params: () => {
             for (let i = 0; i < pathSegments.length; i++) {
-                if ((pathSegments[i][0] === ':')) {
+                if((pathSegments[i][0] === ':')) {
                     const k = pathSegments[i].replace(':', '');
                     const v = urlSegments[i];
-                    ctx.params.set(k, v);
+                    ctx.params.set(k,v);
                 }
             }
         }
@@ -30,67 +28,16 @@ const extract = (route: Route, ctx: Context) => {
 
 }
 
-// ensure the route pattern matches the request URL
-const match = (route: Route, ctx: Context): boolean => {
-    const url = new URL(ctx.request.url);
-    const patternRegex = new RegExp('^' + route.pattern.replace(/:[^/]+/g, '([^/]+)') + '$');
-    const matches = url.pathname.match(patternRegex);
-
-    if (matches && route.method === ctx.request.method) {
-        const extractor = extract(route, ctx);
-        extractor?.params();
-
-        return true;
-    }
-
-    return false;
-}
-
-// set the context for the reuest
-const setContext = (req: Request, lgr: Logger, opts: Options, route: Route): Context => {
-    const token = req.headers.get('Authorization');
-    return {
-        token: token ?? '',
-        cookies: new Map(),
-        formData: req.formData(),
-        request: req,
-        params: new Map(),
-        query: new URL(req.url).searchParams,
-        db: new Database(opts.db ?? ':memory:'),
-        logger: lgr,
-        route: route,
-        json: (statusCode: number, data: any) => http.json(statusCode, data),
-    }
-}
-
 const router: Router = (port?: number | string, options?: RouterOptions<Options>) => {
-    const routes: Array<Route> = new Array();
+    const {addRoute, findRoute} = Radix();
     const lgr = logger();
 
     return {
-        // add a new route
-        add: (pattern: string, method: string, callback: (ctx: Context) => Response | Promise<Response>) => {
-            routes.push({
-                pattern: pattern,
-                method: method,
-                callback: callback,
-            })
+        // add a route to the router tree 
+        add: (pattern: string, method: string, callback: HttpHandler) => {
+            addRoute(pattern, method, callback);
         },
-        GET: (pattern: string, callback: (ctx: Context) => Response | Promise<Response>) => {
-            routes.push({
-                pattern: pattern,
-                method: 'GET',
-                callback: callback,
-            });
-        },
-        POST: (pattern: string, callback: (ctx: Context) => Response | Promise<Response>) => {
-            routes.push({
-                pattern: pattern,
-                method: 'POST',
-                callback: callback,
-            });
-        },
-        // add a route for static files
+        // add a static route to the router tree
         static: async (pattern: string, root: string) => {
             await readDir(root, async (fp, _) => {
                 const pure = path.join('.', fp);
@@ -107,12 +54,15 @@ const router: Router = (port?: number | string, options?: RouterOptions<Options>
                 if (base === 'index') patternPath = pattern;
 
                 const route: Route = {
-                    pattern: patternPath,
+                    children: new Map(),
+                    dynamicPath: '',
+                    isLast: true,
+                    path: patternPath,
                     method: 'GET',
-                    callback: async () => await http.file(200, pure),
+                    handler: async () => await http.file(200, pure),
                 };
 
-                routes.push(route);
+                addRoute(route.path, 'GET', route.handler);
             });
         },
         // start the server
@@ -120,52 +70,44 @@ const router: Router = (port?: number | string, options?: RouterOptions<Options>
             lgr.start(port ?? 3000);
             let opts: Options = { db: ':memory:' };
 
+            // TODO: add support for TLS and WebSockets
             Bun.serve({
                 port: port ?? 3000,
                 ...options,
                 async fetch(req) {
                     const url = new URL(req.url);
+                    let path = url.pathname;
 
+                    // set the database
                     if (options) {
                         let o = options as Options;
                         opts.db = o.db;
                     }
 
-                    let statusCode = 404;
+                    const route = findRoute(path);
 
-                    for (const route of routes) {
-                        const ctx = setContext(req, lgr, opts, route);
-
-                        if (match(route, ctx) || route.pattern === url.pathname) {
-                            if (route.method === ctx.request.method) {
-                                const res = await route.callback(ctx);
-
-                                let cookieValue: string[] = [];
-                                if (ctx.cookies.size !== 0) {
-                                    for (const [key, value] of ctx.cookies) {
-                                        cookieValue.push(`${key}=${value}`);
-                                    }
-                                }
-
-                                res.headers.set('Set-Cookie', cookieValue.join('; '));
-
-                                statusCode = res.status;
-
-                                lgr.info(res.status, route.pattern, req.method, httpStatusCodes[res.status]);
-                                return Promise.resolve(res);
-                            } else {
-                                const res = new Response(httpStatusCodes[405], {
-                                    status: 405,
-                                    statusText: httpStatusCodes[405]
-                                });
-                                lgr.info(405, route.pattern, req.method, httpStatusCodes[405])
-                                return Promise.resolve(res);
-                            }
+                    // if the route exists, execute the handler
+                    if (route) {
+                        if (route.method !== req.method) {
+                            lgr.info(405, url.pathname, req.method, httpStatusCodes[405]);
+                            return Promise.resolve(http.methodNotAllowed());
                         }
-                    }
 
-                    lgr.info(statusCode, url.pathname, req.method, httpStatusCodes[statusCode]);
-                    return Promise.resolve(http.message(statusCode, httpStatusCodes[statusCode]));
+                        const context = createContext(path, route, req);
+                        context.db = new Database(opts.db);
+
+                        const response = await route.handler(context);
+
+                        lgr.info(response.status, url.pathname, req.method, httpStatusCodes[response.status]);
+                        return Promise.resolve(response);
+                    } 
+
+                    // if no route is found, return 404
+                    const response = await http.notFound();
+                        
+                    lgr.info(response.status, url.pathname, req.method, httpStatusCodes[response.status]);
+                    return Promise.resolve(http.notFound());
+
                 }
             });
         },

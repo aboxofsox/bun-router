@@ -3,6 +3,14 @@ import {Logger} from './logger.d';
 
 const pad = (n: number) => String(n).padStart(2, '0'); 
 
+const TITLE = `
+_                          _           
+| |_ _ _ ___    ___ ___ _ _| |_ ___ ___ 
+| . | | |   |  |  _| . | | |  _| -_|  _|
+|___|___|_|_|  |_| |___|___|_| |___|_|  
+                                                                                    
+`
+
 const timestamp = (date: Date) => {
     const month = pad(date.getMonth());
     const day = pad(date.getDate());
@@ -48,6 +56,7 @@ const logger = (): Logger => {
             const portColor = color('green', 'bgBlack', String(port));
             const msg = `${source}: Starting Server on :${portColor}\n`;
 
+            await Bun.write(Bun.stdout, TITLE);
             await Bun.write(Bun.stdout, msg);
         },
         info: async (statusCode: number, routePath: string, method: string, message?: string) => {

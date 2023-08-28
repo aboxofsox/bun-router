@@ -2,25 +2,28 @@ import { TLSOptions, TLSWebSocketServeOptions, WebSocketServeOptions, ServeOptio
 import { Logger } from '../logger/logger';
 import { Database } from 'bun:sqlite';
 
+type HttpHandler = (ctx: Context) => Response | Promise<Response>
 
 type Context = {
-    cookies: Map<string, string>,
-    db: Database,
-    formData: FormData | Promise<FormData> | undefined,
-    json: (statusCode: number, data: any) => Response | Promise<Response>,
-    logger: Logger,
-    params: Map<string, string>,
-    query: URLSearchParams,
-    request: Request,
-    route: Route,
-    token?: string,
+    cookies: Map<string, string>;
+    db?: Database;
+    formData: FormData | Promise<FormData> | undefined;
+    json: (statusCode: number, data: any) => Response | Promise<Response>;
+    logger: Logger;
+    params: Map<string, string>;
+    query: URLSearchParams;
+    request: Request;
+    token?: string;
 };
 
 
 type Route = {
-    pattern: string,
-    method: string,
-    callback: (req: Context) => Response | Promise<Response>
+    children: Map<string, Route>;
+    path: string;
+    dynamicPath: string;
+    method: string;
+    handler: HttpHandler;
+    isLast: boolean;
 }
 
 type Options = {
@@ -35,13 +38,11 @@ type RouterOptions<Options> = ServeOptions
 
 
 type Router = (port?: number | string, options?: RouterOptions) => {
-    add: (pattern: string, method: string, callback: (req: Context) => Response | Promise<Response>) => void,
-    GET: (pattern: string, callback: (ctx: Context) => Response | Promise<Response>) => void,
-    POST: (pattern: string, callback: (ctx: Context) => Response | Promise<Response>) => void,
-    static: (pattern: string, root: string) => void,
-    serve: () => void,
+    add: (pattern: string, method: string, callback: (req: Context) => Response | Promise<Response>) => void;
+    static: (pattern: string, root: string) => void;
+    serve: () => void;
 }
 
 
 
-export { Context , Route, Router, RouterOptions, Options }
+export { Context , Route, Router, RouterOptions, Options, HttpHandler }

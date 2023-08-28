@@ -10,8 +10,7 @@ const http = {
         }));
     },
     html: async (statusCode: number, content: string): Promise<Response> => {
-        content = Bun.escapeHTML(content);
-        return Promise.resolve(new Response(Bun.escapeHTML(content), {
+        return Promise.resolve(new Response(content, {
             status: statusCode,
             statusText: httpStatusCodes[statusCode],
             headers: {'Content-Type': 'text/html; charset=utf-8'}
@@ -45,6 +44,15 @@ const http = {
         const response = new Response(msg ?? 'not found', {
             status: 404,
             statusText: httpStatusCodes[404],
+            headers: {'Content-Type': 'text/html'},
+        });
+    
+        return Promise.resolve(response);
+    },
+    methodNotAllowed: async (msg?: string): Promise<Response> => {
+        const response = new Response(msg ?? 'method not allowed', {
+            status: 405,
+            statusText: httpStatusCodes[405],
             headers: {'Content-Type': 'text/html'},
         });
     
