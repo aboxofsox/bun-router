@@ -49,6 +49,15 @@ const http = {
     
         return Promise.resolve(response);
     },
+    methodNotAllowed: async (msg?: string): Promise<Response> => {
+        const response = new Response(msg ?? 'method not allowed', {
+            status: 405,
+            statusText: httpStatusCodes[405],
+            headers: {'Content-Type': 'text/html'},
+        });
+    
+        return Promise.resolve(response);
+    },
     message:  async (status: number, msg?: string): Promise<Response> => {
         const response = new Response(msg ?? '?', {
             status: status,

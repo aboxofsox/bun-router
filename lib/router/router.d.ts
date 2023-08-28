@@ -18,9 +18,12 @@ type Context = {
 
 
 type Route = {
-    pattern: string,
-    method: string,
-    handler: HttpHandler
+    children: Map<string, Route>;
+    path: string;
+    dynamicPath: string;
+    method: string;
+    handler: HttpHandler;
+    isLast: boolean;
 }
 
 type Options = {

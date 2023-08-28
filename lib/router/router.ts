@@ -4,7 +4,6 @@ import { Route, Router, Context, RouterOptions, Options, HttpHandler } from './r
 import { httpStatusCodes } from '../http/status';
 import { readDir } from '../fs/fsys';
 import { logger } from '../logger/logger';
-import { Logger } from '../logger/logger.d';
 import { http } from '../http/generic-methods';
 import {Radix, createContext} from './tree';
 
@@ -30,15 +29,15 @@ const extract = (path: string, ctx: Context) => {
 }
 
 const router: Router = (port?: number | string, options?: RouterOptions<Options>) => {
-    const routes = Radix();
+    const {addRoute, findRoute} = Radix();
     const lgr = logger();
 
     return {
-        // add a new route
+        // add a route to the router tree 
         add: (pattern: string, method: string, callback: HttpHandler) => {
-            routes.addRoute(pattern, callback);
+            addRoute(pattern, method, callback);
         },
-        // add a route for static files
+        // add a static route to the router tree
         static: async (pattern: string, root: string) => {
             await readDir(root, async (fp, _) => {
                 const pure = path.join('.', fp);
@@ -55,12 +54,15 @@ const router: Router = (port?: number | string, options?: RouterOptions<Options>
                 if (base === 'index') patternPath = pattern;
 
                 const route: Route = {
-                    pattern: patternPath,
+                    children: new Map(),
+                    dynamicPath: '',
+                    isLast: true,
+                    path: patternPath,
                     method: 'GET',
                     handler: async () => await http.file(200, pure),
                 };
 
-                routes.addRoute(route.pattern, route.handler);
+                addRoute(route.path, 'GET', route.handler);
             });
         },
         // start the server
@@ -68,34 +70,44 @@ const router: Router = (port?: number | string, options?: RouterOptions<Options>
             lgr.start(port ?? 3000);
             let opts: Options = { db: ':memory:' };
 
+            // TODO: add support for TLS and WebSockets
             Bun.serve({
                 port: port ?? 3000,
                 ...options,
                 async fetch(req) {
                     const url = new URL(req.url);
+                    let path = url.pathname;
 
+                    // set the database
                     if (options) {
                         let o = options as Options;
                         opts.db = o.db;
                     }
 
-                    let statusCode = 404;
+                    const route = findRoute(path);
 
-                    let path = url.pathname;
-
-                    const route = routes.findRoute(path);
-
+                    // if the route exists, execute the handler
                     if (route) {
+                        if (route.method !== req.method) {
+                            lgr.info(405, url.pathname, req.method, httpStatusCodes[405]);
+                            return Promise.resolve(http.methodNotAllowed());
+                        }
+
                         const context = createContext(path, route, req);
+                        context.db = new Database(opts.db);
+
                         const response = await route.handler(context);
 
                         lgr.info(response.status, url.pathname, req.method, httpStatusCodes[response.status]);
                         return Promise.resolve(response);
-                    }
+                    } 
 
+                    // if no route is found, return 404
+                    const response = await http.notFound();
+                        
+                    lgr.info(response.status, url.pathname, req.method, httpStatusCodes[response.status]);
+                    return Promise.resolve(http.notFound());
 
-                    lgr.info(statusCode, url.pathname, req.method, httpStatusCodes[statusCode]);
-                    return Promise.resolve(http.message(statusCode, httpStatusCodes[statusCode]));
                 }
             });
         },

@@ -1,5 +1,4 @@
 import { describe, test, expect } from 'bun:test';
-import { Context, Route } from '../lib/router/router.d';
 
 describe('Router', () => {
     test('Serve', async () => {

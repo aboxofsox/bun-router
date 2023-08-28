@@ -1,22 +1,14 @@
-import { HttpHandler, Context } from "./router.d";
+import { HttpHandler, Context, Route } from "./router.d";
 import { http } from "../http/generic-methods";
 
+const splitPath = (s: string): string[] => s.split('/').filter(x => x !== '');
 
-type Route = {
-    children: Map<string, Route>;
-    path: string;
-    dynamicPath: string;
-    handler: HttpHandler;
-    isLast: boolean;
-}
-
-const splitPath = (s: string) => s.split('/').filter(x => x !== '');
-
-const createRoute = (path: string, handler: HttpHandler): Route => {
+const createRoute = (path: string, method: string, handler: HttpHandler): Route => {
     const route: Route = {
         children: new Map(),
         path: path,
         dynamicPath: '',
+        method: method,
         handler: handler,
         isLast: false
     };
@@ -41,7 +33,7 @@ const createContext = (path: string, route: Route, req: Request): Context => {
 
     if (route) extractParams(path, route, params);
 
-    return { 
+    return {
         params: params,
         request: req,
         query: new URLSearchParams(path),
@@ -49,13 +41,13 @@ const createContext = (path: string, route: Route, req: Request): Context => {
         formData: undefined,
         logger: undefined,
         json: (statusCode: number, data: any) => http.json(statusCode, data),
-     }
+    }
 };
 
 const Radix = () => {
-    let root = createRoute('', () => new Response('not found'));
+    let root = createRoute('', 'GET', () => http.notFound());
 
-    const addRoute = (path: string, handler: HttpHandler) => {
+    const addRoute = (path: string, method: string, handler: HttpHandler) => {
         const pathParts = splitPath(path);
         let current = root;
 
@@ -65,7 +57,7 @@ const Radix = () => {
                 current.dynamicPath = part;
             }
             if (!current.children.has(part)) {
-                current.children.set(part, createRoute(part, handler));
+                current.children.set(part, createRoute(part, method, handler));
             }
             current = current.children.get(part)!;
         }
@@ -91,8 +83,8 @@ const Radix = () => {
         return current;
     }
 
-    return {addRoute, findRoute }
+    return { addRoute, findRoute }
 
 };
 
-export { Radix, createContext}
+export { Radix, createContext }
