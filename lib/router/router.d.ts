@@ -5,15 +5,15 @@ import { Database } from 'bun:sqlite';
 type HttpHandler = (ctx: Context) => Response | Promise<Response>
 
 type Context = {
-    cookies: Map<string, string>,
-    db?: Database,
-    formData: FormData | Promise<FormData> | undefined,
-    json: (statusCode: number, data: any) => Response | Promise<Response>,
-    logger: Logger,
-    params: Map<string, string>,
-    query: URLSearchParams,
-    request: Request,
-    token?: string,
+    cookies: Map<string, string>;
+    db?: Database;
+    formData: FormData | Promise<FormData> | undefined;
+    json: (statusCode: number, data: any) => Response | Promise<Response>;
+    logger: Logger;
+    params: Map<string, string>;
+    query: URLSearchParams;
+    request: Request;
+    token?: string;
 };
 
 
@@ -38,9 +38,9 @@ type RouterOptions<Options> = ServeOptions
 
 
 type Router = (port?: number | string, options?: RouterOptions) => {
-    add: (pattern: string, method: string, callback: (req: Context) => Response | Promise<Response>) => void,
-    static: (pattern: string, root: string) => void,
-    serve: () => void,
+    add: (pattern: string, method: string, callback: (req: Context) => Response | Promise<Response>) => void;
+    static: (pattern: string, root: string) => void;
+    serve: () => void;
 }
 
 
