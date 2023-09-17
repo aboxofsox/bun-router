@@ -1,83 +1,40 @@
-# Bun Router
-
-I needed a router for `Bun`, so I made one. It's simple, naive, and hardly anything is abstracted. 
+# Bun router
 
 ### Usage
-```typescript
-import { router } from 'bun-router';
+`npm i -s bun-router` 
 
-const r = router();
+or 
 
-r.add('/', 'GET', (ctx) => new Response('Hello World'));
+`bun i bun-router`
 
-r.serve();
-```
-#### Static Files
-```typescript
-import { router } from 'bun-router';
 
-const r = router();
-
-r.static('/', './pages');
-
-r.serve();
-```
-
-##### Example
-```typescript
-import {router, html, json } from 'bun-router';
-
-const r = router(3001);
-
-r.add('/', (ctx) => html('<h1>Hello World</h1>'));
-
-r.add('/greeting/:name', 'GET', (ctx) => {
-    const name = ctx.params.get('name');
-    if (!name) return new Response('invalid url parameters', {status: 400});
-
-    return html(`<h4>Greetings, ${name}!</h4>`);
-});
-
-const store: Map<string, string> = new Map();
-
-r.add('/user/:id', 'GET', (ctx) => {
-    const id = ctx.params.get('id');
-    if (!id) return new Response('user not found', {status: 404});
-    
-    const user = store.get(id);
-
-    if (!user) return new Response('user not found', { status: 404 });
-
-    return json(user);
-});
-
-r.serve();
-```
-
-**SQLite**
+#### Example
 ```ts
-import { router, json } from 'bun-router';
-import { Database } from 'bun:sqlite';
+import { Router, http } from 'bun-router';
 
-const r = router(3000, {db: './examples/dbs/test.db'});
+const router = Router();
 
-r.add('/u/new/:name', 'GET', (ctx) => {
-    const name = ctx.params.get('name');
-    const rando = Math.floor(Math.random()*1000);
+router.add('/', 'GET', () => http.ok());
 
-    ctx.db.run(`INSERT INTO test VALUES(${rando}, "${name}")`);
+router.get('/u/:username', ctx => {
+    const username = ctx.params.get('username');
 
-    return json({message: 'ok'});
+    if (!username) return http.badRequest();
+
+    return ctx.json({ username: username });
 });
 
-r.add('/u/:name', 'GET', (ctx) => {
-    const name = ctx.params.get('name');
-    const data = ctx.db.query(`SELECT * FROM test WHERE name = "${name}";`).get();
-    const d = data as {id: number, name: string};
-
-    return d ? json(d) : new Response('not found', {status: 404});
-});
-
-r.serve();
-
+router.serve();
 ```
+
+##### Static
+```ts
+import { Router } from 'bun-router';
+
+const router = Router();
+
+router.static('/assets', 'static');
+
+router.serve();
+```
+
