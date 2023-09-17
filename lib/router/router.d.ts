@@ -2,20 +2,15 @@ import { TLSOptions, TLSWebSocketServeOptions, WebSocketServeOptions, ServeOptio
 import { Logger } from '../logger/logger';
 import { Database } from 'bun:sqlite';
 
-type HttpHandler = (ctx: Context) => Response | Promise<Response>
-
-type Context = {
-    cookies: Map<string, string>;
-    db?: Database;
-    formData: FormData | Promise<FormData> | undefined;
-    json: (statusCode: number, data: any) => Response | Promise<Response>;
-    logger: Logger;
-    params: Map<string, string>;
-    query: URLSearchParams;
-    request: Request;
-    token?: string;
-};
-
+type BunRouter = (port?: number | string, options?: RouterOptions) => {
+    add: (pattern: string, method: string, callback: HttpHandler) => void;
+    get: (pattern: string, callback: HttpHandler) => void;
+    post: (pattern: string, callback: HttpHandler) => void;
+    put: (pattern: string, callback: HttpHandler) => void;
+    delete: (pattern: string, callback: HttpHandler) => void;
+    static: (pattern: string, root: string) => void;
+    serve: () => void;
+}
 
 type Route = {
     children: Map<string, Route>;
@@ -25,6 +20,19 @@ type Route = {
     handler: HttpHandler;
     isLast: boolean;
 }
+
+type Context = {
+    db?: Database;
+    formData: FormData | Promise<FormData>;
+    json: (statusCode: number, data: any) => Response | Promise<Response>;
+    logger: Logger;
+    params: Map<string, string>;
+    query: URLSearchParams;
+    request: Request;
+    token?: string;
+};
+
+type HttpHandler = (ctx: Context) => Response | Promise<Response>
 
 type Options = {
     db: string,
@@ -36,13 +44,4 @@ type RouterOptions<Options> = ServeOptions
 | TLSWebSocketServeOptions<Options>
 | undefined
 
-
-type Router = (port?: number | string, options?: RouterOptions) => {
-    add: (pattern: string, method: string, callback: (req: Context) => Response | Promise<Response>) => void;
-    static: (pattern: string, root: string) => void;
-    serve: () => void;
-}
-
-
-
-export { Context , Route, Router, RouterOptions, Options, HttpHandler }
+export { Context , Route, BunRouter, RouterOptions, Options, HttpHandler }

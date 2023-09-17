@@ -20,7 +20,7 @@ const readDir = async (dirpath: string, handler: (filepath: string, entry: BunFi
             if (isdir) await readDir(fp, handler);
             else handler(fp, bunFile);
         }
-
 }
+
 
 export { readDir }

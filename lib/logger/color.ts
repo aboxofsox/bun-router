@@ -23,13 +23,13 @@ const Colors: Record<string,string> = {
   } as const;
 
   
-const color = (c: string, bkg: string, msg: string) => {
-    const foreground = Colors[c];
-    const background = Colors[bkg];
-    const reset = Colors.reset;
 
-    return `${foreground}${background}${msg}${reset}`;
-};
+function color(foreground: string, background: string, message: string) {
+  const _foreground = Colors[foreground];
+  const _background = Colors[background];
+  const reset = Colors.reset;
+  return `${_foreground}${_background}${message}${reset}`;
+}
 
 
   

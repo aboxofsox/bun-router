@@ -1,16 +1,11 @@
-import { router, logger, http } from '..';
+import { Router, http } from '..';
 
-const r = router();
-const log = logger();
+const r = Router();
 
-r.add('/:foo', 'GET', (ctx) => {
-    const url = new URL(ctx.request.url);
-    const foo = ctx.params.get('foo');
-    if (!foo) {
-        log.error(500, url.pathname, ctx.request.method, new Error('undefined'));
-        return http.json(500,{text: 'Foo is undefined'});
-    }
-    return http.html(200, `<h4 style='font-family: sans-serif;'>Oh hello, ${foo}</h4>`)
+r.get('/', ctx => {
+    ctx.logger.debug('hello from home');
+    
+    return http.ok();
 });
 
 r.serve();

@@ -1,7 +1,7 @@
-import { router, http } from '..';
+import { Router, http } from '..';
 import { Context } from '../lib/router/router.d';
 
-const home = (ctx: Context) => new Response('Welcome Home', { status: 200 });
+const home = () => new Response('Welcome Home', { status: 200 });
 
 const subreddit = (ctx: Context) => {
     const sub = ctx.params.get('subreddit');
@@ -15,7 +15,7 @@ const user = (ctx: Context) => {
     return http.json(200, { user: user });
 }
 
-const r = router();
+const r = Router();
 
 r.add('/', 'GET', home);
 r.add('/r/:subreddit', 'GET', subreddit);

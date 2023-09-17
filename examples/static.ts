@@ -1,6 +1,6 @@
-import { router } from '..';
+import { Router } from '..';
 
-const r = router(3001);
+const r = Router(3001);
 
 r.static('/', './examples/pages');
 r.serve();

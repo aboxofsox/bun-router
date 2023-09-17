@@ -1,4 +1,4 @@
-import { router, http } from '..';
+import { Router, http } from '..';
 import { Context } from '../lib/router/router.d';
 
 const Todo = () => {
@@ -15,7 +15,7 @@ const Todo = () => {
 
 const todo = Todo();
 
-const r = router();
+const r = Router();
 
 r.add('/api/new', 'POST', ctx => {
     const query = new URL(ctx.request.url).searchParams;

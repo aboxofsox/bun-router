@@ -1,6 +1,12 @@
 import { httpStatusCodes } from "./status";
 
 const http = {
+    ok: async (msg?: string): Promise<Response> => {
+        return Promise.resolve(new Response(msg ?? httpStatusCodes[200], {
+            status: 200,
+            statusText: httpStatusCodes[200],
+        }));
+    },
     json: async (statusCode: number, data: any): Promise<Response> => {
         const jsonString = JSON.stringify(data);
         return Promise.resolve(new Response(jsonString, {
@@ -65,7 +71,7 @@ const http = {
             headers: {'Content-Type': 'text/html; charset-utf-8'},
         });
         return Promise.resolve(response)
-    }, 
+    },
 }
 
 export { http }

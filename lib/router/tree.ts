@@ -1,5 +1,6 @@
 import { HttpHandler, Context, Route } from "./router.d";
-import { http } from "../http/generic-methods";
+import { http } from "../http/http";
+import { createContext } from './context';
 
 const splitPath = (s: string): string[] => s.split('/').filter(x => x !== '');
 
@@ -16,35 +17,7 @@ const createRoute = (path: string, method: string, handler: HttpHandler): Route 
     return route;
 };
 
-const extractParams = (path: string, route: Route, params: Map<string, string>) => {
-    const pathParts = splitPath(path);
-    const routeParts = splitPath(route.path);
-
-    for (let i = 0; i < routeParts.length; i++) {
-        const part = routeParts[i];
-        if (part.startsWith(':')) {
-            params.set(part.slice(1), pathParts[i]);
-        }
-    }
-};
-
-const createContext = (path: string, route: Route, req: Request): Context => {
-    const params: Map<string, string> = new Map();
-
-    if (route) extractParams(path, route, params);
-
-    return {
-        params: params,
-        request: req,
-        query: new URLSearchParams(path),
-        cookies: new Map(),
-        formData: undefined,
-        logger: undefined,
-        json: (statusCode: number, data: any) => http.json(statusCode, data),
-    }
-};
-
-const Radix = () => {
+const RouteTree = () => {
     let root = createRoute('', 'GET', () => http.notFound());
 
     const addRoute = (path: string, method: string, handler: HttpHandler) => {
@@ -87,4 +60,4 @@ const Radix = () => {
 
 };
 
-export { Radix, createContext }
+export { RouteTree, createContext }

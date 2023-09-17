@@ -1,42 +1,26 @@
 import path from 'path';
 import { Database } from 'bun:sqlite';
-import { Route, Router, Context, RouterOptions, Options, HttpHandler } from './router.d';
+import { Route, BunRouter, Context, RouterOptions, Options, HttpHandler } from './router.d';
 import { httpStatusCodes } from '../http/status';
 import { readDir } from '../fs/fsys';
-import { logger } from '../logger/logger';
-import { http } from '../http/generic-methods';
-import {Radix, createContext} from './tree';
+import { Logger, startMessage } from '../logger/logger';
+import { http } from '../http/http';
+import {RouteTree } from './tree';
+import { createContext } from './context';
 
-const extract = (path: string, ctx: Context) => {
-    const url = new URL(ctx.request.url);
-    const pathSegments = path.split('/');
-    const urlSegments = url.pathname.split('/');
 
-    if (pathSegments.length !== urlSegments.length) return
-
-    return {
-        params: () => {
-            for (let i = 0; i < pathSegments.length; i++) {
-                if((pathSegments[i][0] === ':')) {
-                    const k = pathSegments[i].replace(':', '');
-                    const v = urlSegments[i];
-                    ctx.params.set(k,v);
-                }
-            }
-        }
-    }
-
-}
-
-const router: Router = (port?: number | string, options?: RouterOptions<Options>) => {
-    const {addRoute, findRoute} = Radix();
-    const lgr = logger();
+const Router: BunRouter = (port?: number | string, options?: RouterOptions<Options>) => {
+    const { addRoute, findRoute } = RouteTree();
+    const logger = Logger();
 
     return {
         // add a route to the router tree 
-        add: (pattern: string, method: string, callback: HttpHandler) => {
-            addRoute(pattern, method, callback);
-        },
+        add: (pattern, method, callback) => { addRoute(pattern, method, callback) },
+        get: (pattern: string, callback: HttpHandler) => { addRoute(pattern, 'GET', callback) },
+        post: (pattern, callback) => { addRoute(pattern, 'POST', callback) },
+        put: (pattern, callback) => { addRoute(pattern, 'PUT', callback)},
+        delete: (pattern, callback) => { addRoute(pattern, 'DELETE', callback) },
+        
         // add a static route to the router tree
         static: async (pattern: string, root: string) => {
             await readDir(root, async (fp, _) => {
@@ -67,10 +51,9 @@ const router: Router = (port?: number | string, options?: RouterOptions<Options>
         },
         // start the server
         serve: () => {
-            lgr.start(port ?? 3000);
+            startMessage(port ?? 3000);
             let opts: Options = { db: ':memory:' };
 
-            // TODO: add support for TLS and WebSockets
             Bun.serve({
                 port: port ?? 3000,
                 ...options,
@@ -89,23 +72,23 @@ const router: Router = (port?: number | string, options?: RouterOptions<Options>
                     // if the route exists, execute the handler
                     if (route) {
                         if (route.method !== req.method) {
-                            lgr.info(405, url.pathname, req.method, httpStatusCodes[405]);
+                            logger.info(405, url.pathname, req.method, httpStatusCodes[405]);
                             return Promise.resolve(http.methodNotAllowed());
                         }
 
-                        const context = createContext(path, route, req);
+                        const context = await createContext(path, route, req);
                         context.db = new Database(opts.db);
 
                         const response = await route.handler(context);
 
-                        lgr.info(response.status, url.pathname, req.method, httpStatusCodes[response.status]);
+                        logger.info(response.status, url.pathname, req.method, httpStatusCodes[response.status]);
                         return Promise.resolve(response);
                     } 
 
                     // if no route is found, return 404
                     const response = await http.notFound();
                         
-                    lgr.info(response.status, url.pathname, req.method, httpStatusCodes[response.status]);
+                    logger.info(response.status, url.pathname, req.method, httpStatusCodes[response.status]);
                     return Promise.resolve(http.notFound());
 
                 }
@@ -114,5 +97,4 @@ const router: Router = (port?: number | string, options?: RouterOptions<Options>
     }
 }
 
-
-export { router, extract, http }
+export { Router, http }
