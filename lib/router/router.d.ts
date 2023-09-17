@@ -29,7 +29,6 @@ type Context = {
     params: Map<string, string>;
     query: URLSearchParams;
     request: Request;
-    token?: string;
 };
 
 type HttpHandler = (ctx: Context) => Response | Promise<Response>

@@ -1,4 +1,4 @@
-import { HttpHandler, Context, Route } from "./router.d";
+import { HttpHandler, Route } from "./router.d";
 import { http } from "../http/http";
 import { createContext } from './context';
 

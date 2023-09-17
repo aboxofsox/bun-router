@@ -1,5 +1,4 @@
 import { Router, http } from '..';
-import { Context } from '../lib/router/router.d';
 
 const Todo = () => {
     const list: Record<string, string> = {};

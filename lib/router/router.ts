@@ -1,6 +1,6 @@
 import path from 'path';
 import { Database } from 'bun:sqlite';
-import { Route, BunRouter, Context, RouterOptions, Options, HttpHandler } from './router.d';
+import { Route, BunRouter, RouterOptions, Options, HttpHandler } from './router.d';
 import { httpStatusCodes } from '../http/status';
 import { readDir } from '../fs/fsys';
 import { Logger, startMessage } from '../logger/logger';
@@ -73,7 +73,7 @@ const Router: BunRouter = (port?: number | string, options?: RouterOptions<Optio
                     if (route) {
                         if (route.method !== req.method) {
                             logger.info(405, url.pathname, req.method, httpStatusCodes[405]);
-                            return Promise.resolve(http.methodNotAllowed());
+                            return Promise.resolve(http.errMethodNotAllowed());
                         }
 
                         const context = await createContext(path, route, req);
@@ -86,10 +86,10 @@ const Router: BunRouter = (port?: number | string, options?: RouterOptions<Optio
                     } 
 
                     // if no route is found, return 404
-                    const response = await http.notFound();
+                    const response = await http.errNotFound();
                         
                     logger.info(response.status, url.pathname, req.method, httpStatusCodes[response.status]);
-                    return Promise.resolve(http.notFound());
+                    return Promise.resolve(http.errNotFound());
 
                 }
             });
