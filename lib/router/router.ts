@@ -73,7 +73,7 @@ const Router: BunRouter = (port?: number | string, options?: RouterOptions<Optio
                     if (route) {
                         if (route.method !== req.method) {
                             logger.info(405, url.pathname, req.method, httpStatusCodes[405]);
-                            return Promise.resolve(http.errMethodNotAllowed());
+                            return Promise.resolve(http.methodNotAllowed());
                         }
 
                         const context = await createContext(path, route, req);
@@ -86,10 +86,10 @@ const Router: BunRouter = (port?: number | string, options?: RouterOptions<Optio
                     } 
 
                     // if no route is found, return 404
-                    const response = await http.errNotFound();
+                    const response = await http.notFound();
                         
                     logger.info(response.status, url.pathname, req.method, httpStatusCodes[response.status]);
-                    return Promise.resolve(http.errNotFound());
+                    return Promise.resolve(http.notFound());
 
                 }
             });
