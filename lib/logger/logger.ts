@@ -9,7 +9,7 @@ _                          _
 |___|___|_|_|  |_| |___|___|_| |___|_|  
                                                                                     
 `;
-const VERSION = '0.7.3';
+const VERSION = '0.7.4-experimental';
 const Logger = (): BunLogger => {
 	return {
 		info: async (statusCode: number, routePath: string, method: string, message?: string) => {
@@ -17,7 +17,7 @@ const Logger = (): BunLogger => {
 			const source = color('green', 'bgBlack', `[bun-router ${stamp}]`);
 			const rp = color('white', 'bgBlack', routePath);
 
-			message = `${source}: ${setColor(statusCode)}: ${rp} ${(method === 'GET') ? ' ->' : ' <-'} ${method}${ message ?? ''}\n`;
+			message = `${source}: ${setColor(statusCode)}: ${rp} ${(method === 'GET') ? ' ->' : ' <-'} ${method} ${ message ?? ''}\n`;
 
 			await Bun.write(Bun.stdout, message);
 

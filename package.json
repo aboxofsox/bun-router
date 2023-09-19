@@ -14,7 +14,7 @@
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
-  "version": "0.7.3-experimental.0",
+  "version": "0.7.4-experimental.0",
   "dependencies": {
     "eslint-plugin-react-hooks": "^4.6.0"
   }
