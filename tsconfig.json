@@ -16,7 +16,6 @@
     "allowJs": true,
     "noEmit": true,
     "types": [
-      "./index.d.ts",
       "bun-types" // add Bun global
     ]
   }

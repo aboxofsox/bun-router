@@ -53,4 +53,27 @@ router.post('/register', ctx => {
 
 ```
 
+##### JSX
+```tsx
+// ./pages/home.tsx
+export default const Home = (title: string) => {
+    return (
+        <main>
+            <h1>{ title }</h1>
+        </main>
+    );
+};
+```
+
+```ts
+// ./index.ts
+import { Router } from 'bun-router';
+import Home from './pages/home';
+
+const router = Router();
+
+router.get('/', ctx => ctx.render(Home('Hello World')))
+
+router.serve();
+```
 

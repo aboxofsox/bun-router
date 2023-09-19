@@ -21,5 +21,9 @@ async function readDir(dirpath: string, handler: (filepath: string, entry: BunFi
     }
 }
 
+function ext(path: string): string {
+    return path.split('.').pop() || '';
+}
 
-export { readDir }
+
+export { readDir, ext }
