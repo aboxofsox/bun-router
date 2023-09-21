@@ -31,10 +31,9 @@ const Router: BunRouter = (port?: number | string, options?: RouterOptions<Optio
 		// the root directory is traversed recursively
 		static: async (pattern: string, root: string) => {
 			await readDir(root, async (fp) => {
-				const pure = path.join('.', fp);
-				const ext = path.extname(pure);
+				const ext = path.extname(fp);
 
-				let base = path.basename(pure);
+				let base = path.basename(fp);
 
 				//FIXME: this can be improved
 				if (ext === '.html') base = base.replace(ext, '');
@@ -46,6 +45,8 @@ const Router: BunRouter = (port?: number | string, options?: RouterOptions<Optio
 
 				if (base === 'index') patternPath = pattern;
 
+				const purePath = path.join(root, patternPath);
+
 				const route: Route = {
 					children: new Map(),
 					dynamicPath: '',
@@ -54,10 +55,10 @@ const Router: BunRouter = (port?: number | string, options?: RouterOptions<Optio
 					method: 'GET',
 					handler: async () => {
 						if (ext === '.tsx') {
-							const component = await loadComponent(path.join(root, patternPath));
+							const component = await loadComponent(purePath.split('.')[0]);
 							return await http.render(component());
 						} else {
-							return await http.file(200, pure);
+							return await http.file(200, fp);
 						}
 					},
 				};
