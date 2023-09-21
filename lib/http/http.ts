@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { httpStatusCodes } from './status';
+import { ReactNode } from 'react';
+import { renderToReadableStream } from 'react-dom/server';
 
 const http = {
 	ok: async (msg?: string): Promise<Response> => {
@@ -42,6 +44,10 @@ const http = {
 			statusText: httpStatusCodes[statusCode],
 			headers: { 'Content-Type': contentType}
 		}));
+	},
+	render: async (component: ReactNode): Promise<Response> => {
+		const stream = await renderToReadableStream(component);
+		return new Response(stream, { status: 200, statusText: httpStatusCodes[200]});
 	},
 	noContent: async (): Promise<Response> => Promise.resolve(new Response('no content', {
 		status: 204,

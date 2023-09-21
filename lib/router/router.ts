@@ -8,10 +8,14 @@ import { http } from '../http/http';
 import { RouteTree } from './tree';
 import { createContext } from './context';
 
-
 const Router: BunRouter = (port?: number | string, options?: RouterOptions<Options>) => {
 	const { addRoute, findRoute } = RouteTree();
 	const logger = Logger();
+
+	async function loadComponent(name: string) {
+		const module = await import(name);
+		return module.default;
+	}
 
 	return {
 		// add a route to the router tree 
@@ -21,7 +25,10 @@ const Router: BunRouter = (port?: number | string, options?: RouterOptions<Optio
 		put: (pattern, callback) => { addRoute(pattern, 'PUT', callback);},
 		delete: (pattern, callback) => { addRoute(pattern, 'DELETE', callback); },
         
-		// add a static route to the router tree
+		// add static routes to the router tree
+		// .tsx and .html are rendered as components
+		// all other file extensions are served as files
+		// the root directory is traversed recursively
 		static: async (pattern: string, root: string) => {
 			await readDir(root, async (fp) => {
 				const pure = path.join('.', fp);
@@ -29,7 +36,9 @@ const Router: BunRouter = (port?: number | string, options?: RouterOptions<Optio
 
 				let base = path.basename(pure);
 
+				//FIXME: this can be improved
 				if (ext === '.html') base = base.replace(ext, '');
+				if (ext === '.tsx') base = base.replace(ext, '');
 
 				if (pattern[0] !== '/') pattern = '/' + pattern;
 
@@ -43,7 +52,14 @@ const Router: BunRouter = (port?: number | string, options?: RouterOptions<Optio
 					isLast: true,
 					path: patternPath,
 					method: 'GET',
-					handler: async () => await http.file(200, pure),
+					handler: async () => {
+						if (ext === '.tsx') {
+							const component = await loadComponent(path.join(root, patternPath));
+							return await http.render(component());
+						} else {
+							return await http.file(200, pure);
+						}
+					},
 				};
 
 				addRoute(route.path, 'GET', route.handler);
@@ -90,7 +106,6 @@ const Router: BunRouter = (port?: number | string, options?: RouterOptions<Optio
                         
 					logger.info(response.status, url.pathname, req.method, httpStatusCodes[response.status]);
 					return Promise.resolve(http.notFound());
-
 				}
 			});
 		},

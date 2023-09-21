@@ -29,6 +29,10 @@ router.serve();
 ```
 
 ##### Static
+Read a directory and serve it's contents. `.tsx` and `.html` files are rendered by default, everything else is served, including the extension. 
+
+Ex: `/assets/gopher.png` would serve a `.png` image. `/home` would be `.tsx` or `.html` depending on extension.
+
 ```ts
 import { Router } from 'bun-router';
 
@@ -76,4 +80,5 @@ router.get('/', ctx => ctx.render(Home('Hello World')))
 
 router.serve();
 ```
+
 

@@ -59,4 +59,4 @@ const RouteTree = () => {
 
 };
 
-export { RouteTree, createContext as createContext };
+export { RouteTree, createContext };
