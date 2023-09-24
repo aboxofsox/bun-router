@@ -174,3 +174,6 @@ lib/markdown/
 # IDE
 .idea
 .vscode
+
+# Experimental
+./lib/resolver

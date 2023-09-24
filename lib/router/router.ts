@@ -36,12 +36,11 @@ const Router: BunRouter = (port?: number | string, options?: RouterOptions<Optio
 				let base = path.basename(fp);
 
 				//FIXME: this can be improved
-				if (ext === '.html') base = base.replace(ext, '');
-				if (ext === '.tsx') base = base.replace(ext, '');
+				if (ext === '.html' || ext === '.tsx') base = base.replace(ext, '');
 
 				if (pattern[0] !== '/') pattern = '/' + pattern;
 
-				let patternPath = pattern + base;
+				let patternPath = pattern + '/' + base;
 
 				if (base === 'index') patternPath = pattern;
 
