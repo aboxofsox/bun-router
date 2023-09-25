@@ -51,7 +51,7 @@ const Router: BunRouter = (port?: number | string, options?: RouterOptions<Optio
 					children: new Map(),
 					dynamicPath: '',
 					isLast: true,
-					path: patternPath.slice(1),
+					path: patternPath.slice(1), // remove the leading '/'
 					method: 'GET',
 					handler: async () => {
 						if (extension === '.tsx') {
@@ -62,8 +62,6 @@ const Router: BunRouter = (port?: number | string, options?: RouterOptions<Optio
 						}
 					},
 				};
-
-				console.log(route.path);
 
 				addRoute(route.path, 'GET', route.handler);
 			});
