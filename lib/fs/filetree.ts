@@ -1,4 +1,3 @@
-import { splitFilePath } from '../fs/fsys';
 import path from 'node:path';
 
 type File = {
@@ -22,8 +21,8 @@ function createFile(name: string): File {
 const FileTree = (dir: string) => {
 	const root = createFile(dir);
 
-	const addFile = (_path: string) => {
-		const pathParts = splitFilePath(_path);
+	const addFile = (filepath: string) => {
+		const pathParts = filepath.split(path.sep);
 		let current = root;
 
 		for (let i = 0; i < pathParts.length; i++) {
@@ -35,8 +34,8 @@ const FileTree = (dir: string) => {
 		}
 
 		current.isLast = true;
-		current.path = _path;
-		current.extension = path.extname(_path);
+		current.path = filepath;
+		current.extension = path.extname(filepath);
 	};
 
 	const getFilesByExtension = (extension: string): string[] => {
@@ -53,9 +52,9 @@ const FileTree = (dir: string) => {
 		return files;
 	};
 
-	const getFileByName = (path: string): string | undefined => {
+	const getFileByName = (filepath: string): string | undefined => {
 		let current = root;
-		const pathParts = splitFilePath(path);
+		const pathParts = filepath.split(path.sep);
 		for (let i = 0; i < pathParts.length; i++) {
 			const part = pathParts[i];
 			if (current.children.has(part)) {
