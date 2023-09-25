@@ -2,7 +2,7 @@ import path from 'path';
 import { Database } from 'bun:sqlite';
 import { Route, BunRouter, RouterOptions, Options, HttpHandler } from './router.d';
 import { httpStatusCodes } from '../http/status';
-import { readDir } from '../fs/fsys';
+import { readDir, resolveModulePath } from '../fs/fsys';
 import { Logger, startMessage } from '../logger/logger';
 import { http } from '../http/http';
 import { RouteTree } from './tree';
@@ -54,7 +54,7 @@ const Router: BunRouter = (port?: number | string, options?: RouterOptions<Optio
 					method: 'GET',
 					handler: async () => {
 						if (ext === '.tsx') {
-							const component = await loadComponent(purePath.split('.')[0]);
+							const component = await loadComponent(resolveModulePath(purePath.split('.')[0]));
 							return await http.render(component());
 						} else {
 							return await http.file(200, fp);

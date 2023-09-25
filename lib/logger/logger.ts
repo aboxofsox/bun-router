@@ -9,7 +9,7 @@ _                          _
 |___|___|_|_|  |_| |___|___|_| |___|_|  
                                                                                     
 `;
-const VERSION = '0.7.4-experimental.4';
+const VERSION = '0.7.4-experimental.5';
 const Logger = (): BunLogger => {
 	return {
 		info: async (statusCode: number, routePath: string, method: string, message?: string) => {

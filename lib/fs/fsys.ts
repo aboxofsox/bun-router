@@ -32,5 +32,9 @@ function splitFilePath(p: string): string[] {
 	return p.split(path.sep);
 }
 
+function resolveModulePath(module: string) {
+	return path.join(process.cwd(), module);
+}
 
-export { readDir, ext, splitFilePath };
+
+export { readDir, ext, splitFilePath, resolveModulePath };
