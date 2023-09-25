@@ -12,9 +12,22 @@ const Router: BunRouter = (port?: number | string, options?: RouterOptions<Optio
 	const { addRoute, findRoute } = RouteTree();
 	const logger = Logger();
 
-	async function loadComponent(name: string) {
-		const module = await import(name);
+	async function loadComponent(root: string, name: string) {
+		const module = await import(path.join(process.cwd(), root, name));
 		return module.default;
+	}
+
+	function normalizePath(pattern: string, pathname: string) {
+		const extension = path.extname(pathname);
+		let base = path.basename(pathname);
+
+		if (extension === '.html' || extension === '.tsx') base = base.replace(extension, '');
+
+		let patternPath = [pattern, base].join('/');
+
+		if (base === 'index') patternPath = pattern;
+		
+		return { patternPath, extension, base }
 	}
 
 	return {
@@ -31,21 +44,7 @@ const Router: BunRouter = (port?: number | string, options?: RouterOptions<Optio
 		// the root directory is traversed recursively
 		static: async (pattern: string, root: string) => {
 			await readDir(root, async (fp) => {
-				const ext = path.extname(fp);
-
-				let base = path.basename(fp);
-
-				//FIXME: this can be improved
-				if (ext === '.html') base = base.replace(ext, '');
-				if (ext === '.tsx') base = base.replace(ext, '');
-
-				if (pattern[0] !== '/') pattern = '/' + pattern;
-
-				let patternPath = pattern + base;
-
-				if (base === 'index') patternPath = pattern;
-
-				const purePath = path.join(root, patternPath);
+				const { patternPath, extension, base } = normalizePath(pattern, fp);
 
 				const route: Route = {
 					children: new Map(),
@@ -54,8 +53,8 @@ const Router: BunRouter = (port?: number | string, options?: RouterOptions<Optio
 					path: patternPath,
 					method: 'GET',
 					handler: async () => {
-						if (ext === '.tsx') {
-							const component = await loadComponent(purePath.split('.')[0]);
+						if (extension === '.tsx') {
+							const component = await loadComponent(root, base);
 							return await http.render(component());
 						} else {
 							return await http.file(200, fp);
