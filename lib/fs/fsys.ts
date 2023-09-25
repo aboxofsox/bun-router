@@ -22,15 +22,18 @@ async function readDir(dirpath: string, handler: (filepath: string, entry: BunFi
 	}
 }
 
-// get the extension of a file (unnecessary)
-function ext(p: string): string {
-	return path.extname(p);
+// resolve module paths relative to the current working directory
+function resolveModulePath(module: string) {
+	return path.join(process.cwd(), module);
 }
 
-// split a file path into an array of strings (unnecessary)
-function splitFilePath(p: string): string[] {
-	return p.split(path.sep);
+function exists(filepath: string): boolean {
+	try {
+		fs.access(filepath);
+		return true;
+	} catch (err) {
+		return false;
+	}
 }
 
-
-export { readDir, ext, splitFilePath };
+export { readDir, resolveModulePath, exists };

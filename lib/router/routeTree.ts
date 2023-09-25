@@ -1,7 +1,6 @@
 import { HttpHandler, Route } from './router.d';
 import { http } from '../http/http';
 import { createContext } from './context';
-import { splitPath } from '../util/strings';
 
 const createRoute = (path: string, method: string, handler: HttpHandler): Route => {
 	const route: Route = {
@@ -19,8 +18,8 @@ const createRoute = (path: string, method: string, handler: HttpHandler): Route 
 const RouteTree = () => {
 	const root = createRoute('', 'GET', () => http.notFound());
 
-	const addRoute = (path: string, method: string, handler: HttpHandler) => {
-		const pathParts = splitPath(path);
+	const addRoute = (pattern: string, method: string, handler: HttpHandler) => {
+		const pathParts = pattern.split('/');
 		let current = root;
 
 		for (let i = 0; i < pathParts.length; i++) {
@@ -36,11 +35,11 @@ const RouteTree = () => {
 
 		current.handler = handler;
 		current.isLast = true;
-		current.path = path;
+		current.path = pattern;
 	};
 
-	function findRoute(path: string): Route | undefined {
-		const pathParts = splitPath(path);
+	function findRoute(pathname: string): Route | undefined {
+		const pathParts = pathname.split('/');
 		let current = root;
 		for (let i = 0; i < pathParts.length; i++) {
 			const part = pathParts[i];

@@ -6,8 +6,8 @@ import { http } from './router';
 import { ReactNode } from 'react';
 
 async function createContext(path: string, route: Route, request: Request): Promise<Context> {
-	const params = extractParams(path, route);
 	const query = new URLSearchParams(path);
+	const params = extractParams(path, route);
 	const formData = isMultiPartForm(request.headers) ? await request.formData() : new FormData();
 
 	return Promise.resolve({
@@ -21,16 +21,16 @@ async function createContext(path: string, route: Route, request: Request): Prom
 	});
 }
 
-function extractParams(path: string, route: Route): Map<string, string> {
+function extractParams(pattern: string, route: Route): Map<string, string> {
 	const params: Map<string, string> = new Map();
-	const pathSegments = path.split('/');
+	const pathSegments = pattern.split('/');
 	const routeSegments = route.path.split('/');
 
 	if (pathSegments.length !== routeSegments.length) return params;
 
 	for (let i = 0; i < pathSegments.length; i++) {
 		if (routeSegments[i][0] === ':') {
-			const key = routeSegments[i].replace(':', '');
+			const key = routeSegments[i].slice(1);
 			const value = pathSegments[i];
 			params.set(key, value);
 		}
@@ -41,8 +41,7 @@ function extractParams(path: string, route: Route): Map<string, string> {
 
 function getContentType(headers: Headers): string {
 	const contentType = headers.get('Content-Type');
-	if (!contentType) return '';
-	return contentType;
+	return contentType ?? '';
 }
 
 function isMultiPartForm(headers: Headers): boolean {

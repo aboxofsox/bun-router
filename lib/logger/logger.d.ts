@@ -5,4 +5,4 @@ type BunLogger = {
     message: (message: string) => void,
 }
 
-export { BunLogger }
+export { BunLogger };
