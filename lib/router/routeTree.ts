@@ -18,7 +18,7 @@ const createRoute = (path: string, method: string, handler: HttpHandler): Route 
 const RouteTree = () => {
 	const root = createRoute('', 'GET', () => http.notFound());
 
-	const addRoute = (pattern: string, method: string, handler: HttpHandler) => {
+	function addRoute (pattern: string, method: string, handler: HttpHandler){
 		const pathParts = pattern.split('/');
 		let current = root;
 
@@ -36,7 +36,7 @@ const RouteTree = () => {
 		current.handler = handler;
 		current.isLast = true;
 		current.path = pattern;
-	};
+	}
 
 	function findRoute(pathname: string): Route | undefined {
 		const pathParts = pathname.split('/');
@@ -54,7 +54,31 @@ const RouteTree = () => {
 		return current;
 	}
 
-	return { addRoute, findRoute };
+	function size() {
+		let count = 0;
+		function traverse(route: Route) {
+			count++;
+			for (const child of route.children.values()) {
+				traverse(child);
+			}
+		}
+		traverse(root);
+		return count;
+	}
+
+	function list() {
+		const routes: Route[] = [];
+		function traverse(route: Route) {
+			routes.push(route);
+			for (const child of route.children.values()) {
+				traverse(child);
+			}
+		}
+		traverse(root);
+		return routes;
+	}
+
+	return { addRoute, findRoute, size, list };
 
 };
 

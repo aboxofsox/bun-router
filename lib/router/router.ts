@@ -2,14 +2,14 @@ import path from 'path';
 import { Database } from 'bun:sqlite';
 import { Route, BunRouter, RouterOptions, Options, HttpHandler } from './router.d';
 import { httpStatusCodes } from '../http/status';
-import { readDir, exists } from '../fs/fsys';
+import { readDir } from '../fs/fsys';
 import { Logger, startMessage } from '../logger/logger';
 import { http } from '../http/http';
 import { RouteTree } from './routeTree';
 import { createContext } from './context';
 
 const Router: BunRouter = (port?: number | string, options?: RouterOptions<Options>) => {
-	const { addRoute, findRoute } = RouteTree();
+	const { addRoute, findRoute, list } = RouteTree();
 	const logger = Logger();
 
 	async function loadComponent(root: string, name: string) {
@@ -17,9 +17,9 @@ const Router: BunRouter = (port?: number | string, options?: RouterOptions<Optio
 		return module.default;
 	}
 
-	function normalizePath(pattern: string, pathname: string) {
+	function extractPathExtBase(pattern: string, pathname: string) {
 		const extension = path.extname(pathname);
-		let base = path.basename(pathname);
+		let base = encodeURIComponent(path.basename(pathname));
 
 		if (extension === '.html' || extension === '.tsx') base = base.replace(extension, '');
 
@@ -27,9 +27,14 @@ const Router: BunRouter = (port?: number | string, options?: RouterOptions<Optio
 
 		if (base === 'index') patternPath = pattern;
 		
-		return { patternPath, extension, base }
+		return { patternPath, extension, base };
 	}
 
+	async function exists(fp: string) {
+		const f = Bun.file(fp);
+		return await f.exists();
+	}
+	
 	return {
 		// add a route to the router tree 
 		add: (pattern, method, callback) => { addRoute(pattern, method, callback); },
@@ -43,15 +48,15 @@ const Router: BunRouter = (port?: number | string, options?: RouterOptions<Optio
 		// all other file extensions are served as files
 		// the root directory is traversed recursively
 		static: async (pattern: string, root: string) => {
-			if (!exists(root)) console.log(`Cannot find directory ${root}`);
+			if (!exists(root)) return console.error(`Directory not found: ${root}`);
 			await readDir(root, async (fp) => {
-				const { patternPath, extension, base } = normalizePath(pattern, fp);
+				const { patternPath, extension, base } = extractPathExtBase(pattern, fp);
 
 				const route: Route = {
 					children: new Map(),
 					dynamicPath: '',
 					isLast: true,
-					path: patternPath.slice(1), // remove the leading '/'
+					path: patternPath.startsWith('//') ? patternPath.slice(1) : patternPath, // remove the leading '/' if it exists
 					method: 'GET',
 					handler: async () => {
 						if (extension === '.tsx') {
@@ -65,6 +70,9 @@ const Router: BunRouter = (port?: number | string, options?: RouterOptions<Optio
 
 				addRoute(route.path, 'GET', route.handler);
 			});
+
+			console.log(list());
+			
 		},
 		// start the server
 		serve: () => {
@@ -102,11 +110,16 @@ const Router: BunRouter = (port?: number | string, options?: RouterOptions<Optio
 						return Promise.resolve(response);
 					} 
 
-					// if no route is found, return 404
+					// if no route is found, return 404 
 					const response = await http.notFound();
                         
 					logger.info(response.status, url.pathname, req.method, httpStatusCodes[response.status]);
 					return Promise.resolve(http.notFound());
+				},
+				error(error) {
+					return new Response(`<pre>${error}\n${error.stack}</pre>`, {
+						headers: { 'Content-Type': 'text/html' },
+					});
 				}
 			});
 		},
