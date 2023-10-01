@@ -19,6 +19,7 @@ const RouteTree = () => {
 	const root = createRoute('', 'GET', () => http.notFound());
 
 	function addRoute (pattern: string, method: string, handler: HttpHandler){
+		console.log(pattern);
 		const pathParts = pattern.split('/');
 		let current = root;
 

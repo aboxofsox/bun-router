@@ -3,6 +3,9 @@ import { httpStatusCodes } from './status';
 import { ReactNode } from 'react';
 import { renderToReadableStream } from 'react-dom/server';
 
+// http is a collection of functions that return a Response
+// object with the appropriate status code and content type
+// e.g. http.ok() returns a 200 response
 const http = {
 	ok: async (msg?: string): Promise<Response> => {
 		return Promise.resolve(new Response(msg ?? httpStatusCodes[200], {
@@ -47,7 +50,11 @@ const http = {
 	},
 	render: async (component: ReactNode): Promise<Response> => {
 		const stream = await renderToReadableStream(component);
-		return new Response(stream, { status: 200, statusText: httpStatusCodes[200]});
+		return new Response(stream, { 
+			status: 200, 
+			statusText: httpStatusCodes[200], 
+			headers: {'Content-Type': 'text/html; charset=utf-8'}
+		});
 	},
 	noContent: async (): Promise<Response> => Promise.resolve(new Response('no content', {
 		status: 204,

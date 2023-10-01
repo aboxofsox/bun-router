@@ -1,6 +1,6 @@
 import path from 'path';
 import { Database } from 'bun:sqlite';
-import { Route, BunRouter, RouterOptions, Options, HttpHandler } from './router.d';
+import { Route, BunRouter, RouterOptions, Options } from './router.d';
 import { httpStatusCodes } from '../http/status';
 import { readDir } from '../fs/fsys';
 import { Logger, startMessage } from '../logger/logger';
@@ -9,14 +9,16 @@ import { RouteTree } from './routeTree';
 import { createContext } from './context';
 
 const Router: BunRouter = (port?: number | string, options?: RouterOptions<Options>) => {
-	const { addRoute, findRoute, list } = RouteTree();
-	const logger = Logger();
+	const { addRoute, findRoute } = RouteTree();
+	const logger = Logger(options?.enableFileLogging ?? false);
 
+	// load a component from the root directory relative to the cwd
 	async function loadComponent(root: string, name: string) {
 		const module = await import(path.join(process.cwd(), root, name));
 		return module.default;
 	}
 
+	// extract the path, extension, and base name from a file path
 	function extractPathExtBase(pattern: string, pathname: string) {
 		const extension = path.extname(pathname);
 		let base = encodeURIComponent(path.basename(pathname));
@@ -30,6 +32,7 @@ const Router: BunRouter = (port?: number | string, options?: RouterOptions<Optio
 		return { patternPath, extension, base };
 	}
 
+	// check if a file exists
 	async function exists(fp: string) {
 		const f = Bun.file(fp);
 		return await f.exists();
@@ -38,7 +41,7 @@ const Router: BunRouter = (port?: number | string, options?: RouterOptions<Optio
 	return {
 		// add a route to the router tree 
 		add: (pattern, method, callback) => { addRoute(pattern, method, callback); },
-		get: (pattern: string, callback: HttpHandler) => { addRoute(pattern, 'GET', callback); },
+		get: (pattern, callback) => { addRoute(pattern, 'GET', callback); },
 		post: (pattern, callback) => { addRoute(pattern, 'POST', callback); },
 		put: (pattern, callback) => { addRoute(pattern, 'PUT', callback);},
 		delete: (pattern, callback) => { addRoute(pattern, 'DELETE', callback); },
@@ -51,10 +54,9 @@ const Router: BunRouter = (port?: number | string, options?: RouterOptions<Optio
 			if (!exists(root)) return console.error(`Directory not found: ${root}`);
 			await readDir(root, async (fp) => {
 				const { patternPath, extension, base } = extractPathExtBase(pattern, fp);
-
 				const route: Route = {
 					children: new Map(),
-					dynamicPath: '',
+					dynamicPath: pattern,
 					isLast: true,
 					path: patternPath.startsWith('//') ? patternPath.slice(1) : patternPath, // remove the leading '/' if it exists
 					method: 'GET',
@@ -70,14 +72,12 @@ const Router: BunRouter = (port?: number | string, options?: RouterOptions<Optio
 
 				addRoute(route.path, 'GET', route.handler);
 			});
-
-			console.log(list());
 			
 		},
-		// start the server
+		// start listening for requests
 		serve: () => {
 			startMessage(port ?? 3000);
-			const opts: Options = { db: ':memory:' };
+			const opts: Options = { db: ':memory:', enableFileLogging: false };
 
 			Bun.serve({
 				port: port ?? 3000,
@@ -90,6 +90,7 @@ const Router: BunRouter = (port?: number | string, options?: RouterOptions<Optio
 					if (options) {
 						const o = options as Options;
 						opts.db = o.db;
+						opts.enableFileLogging = o.enableFileLogging;
 					}
 
 					const route = findRoute(pathname);
@@ -101,9 +102,11 @@ const Router: BunRouter = (port?: number | string, options?: RouterOptions<Optio
 							return Promise.resolve(http.methodNotAllowed());
 						}
 
-						const context = await createContext(pathname, route, req);
+						// create a context for the handler
+						const context = await createContext(pathname, route, req, opts.enableFileLogging);
 						context.db = new Database(opts.db);
 
+						// call the handler
 						const response = await route.handler(context);
 
 						logger.info(response.status, url.pathname, req.method, httpStatusCodes[response.status]);
@@ -116,6 +119,7 @@ const Router: BunRouter = (port?: number | string, options?: RouterOptions<Optio
 					logger.info(response.status, url.pathname, req.method, httpStatusCodes[response.status]);
 					return Promise.resolve(http.notFound());
 				},
+				// if an error occurs, return a 500 response
 				error(error) {
 					return new Response(`<pre>${error}\n${error.stack}</pre>`, {
 						headers: { 'Content-Type': 'text/html' },

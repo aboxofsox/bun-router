@@ -1,5 +1,4 @@
 import { color } from './color';
-import { BunLogger } from './logger.d';
 
 
 const TITLE = `
@@ -9,8 +8,24 @@ _                          _
 |___|___|_|_|  |_| |___|___|_| |___|_|  
                                                                                     
 `;
-const VERSION = '0.7.4-experimental.8';
-const Logger = (): BunLogger => {
+const VERSION = '0.7.4-experimental.10';
+const Logger = (enableFileLogging: boolean) => {
+	const file = Bun.file('bun-router.log');
+	const writer = enableFileLogging ? file.writer() : null;
+
+	function stripAnsi(str: string) {
+		const ansiRegex = /\u001B\[(?:[0-9]{1,3}(?:;[0-9]{1,3})*)?[m|K]/g;
+		return str.replace(ansiRegex, '');
+	}
+
+	async function write(message: string) {
+		await Bun.write(Bun.stdout, message);
+		if (writer) {
+			writer.write(stripAnsi(message));
+			writer.flush();
+		}
+	}
+
 	return {
 		info: async (statusCode: number, routePath: string, method: string, message?: string) => {
 			const { stamp } = timestamp((new Date(Date.now())));
@@ -19,7 +34,7 @@ const Logger = (): BunLogger => {
 
 			message = `${source}: ${setColor(statusCode)}: ${rp} ${(method === 'GET') ? ' ->' : ' <-'} ${method} ${ message ?? ''}\n`;
 
-			await Bun.write(Bun.stdout, message);
+			await write(message);
 
 		},
 		error: async (statusCode: number, routePath: string, method: string, error: Error) => {
@@ -29,7 +44,7 @@ const Logger = (): BunLogger => {
 
 			const message = `${source}: ${setColor(statusCode)}: ${rp} ${(method === 'GET') ? ' -> ' : ' <-'} ${error.message}\n`;
 
-			await Bun.write(Bun.stdout, message);
+			await write(message);
 		},
 		warn: async (message: string) => {
 			const { stamp } = timestamp((new Date(Date.now())));
@@ -38,7 +53,7 @@ const Logger = (): BunLogger => {
 
 			message = `${source} : ${messageColor}\n`;
 
-			await Bun.write(Bun.stdout, message);
+			await write(message);
 		},
 		message: async (message: string) => {
 			const { stamp } = timestamp((new Date(Date.now())));
@@ -47,8 +62,9 @@ const Logger = (): BunLogger => {
 
 			message = `${source}: ${messageColor}\n`;
 
-			await Bun.write(Bun.stdout, message);
+			await write(message);
 		},
+
 	};
 };
 

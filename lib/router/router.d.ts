@@ -35,7 +35,8 @@ type Context = {
 type HttpHandler = (ctx: Context) => Response | Promise<Response>
 
 type Options = {
-    db: string,
+    db: string;
+    enableFileLogging: boolean;
 }
 
 type RouterOptions<Options> = ServeOptions

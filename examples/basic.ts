@@ -1,6 +1,6 @@
 import { Router, http } from '..';
 
-const router = Router();
+const router = Router(3000, {enableFileLogging: false});
 
 router.add('/', 'GET', () => http.json(200, 'ok'));
 
