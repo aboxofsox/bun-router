@@ -15,6 +15,7 @@
     "forceConsistentCasingInFileNames": true,
     "allowJs": true,
     "noEmit": true,
+    "noImplicitAny": false,
     "types": [
       "bun-types" // add Bun global
     ],

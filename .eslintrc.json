@@ -18,6 +18,7 @@
         "react"
     ],
     "rules": {
+        "no-eplicit-any": "off",
         "indent": [
             "warn",
             "tab"

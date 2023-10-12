@@ -8,7 +8,7 @@ _                          _
 |___|___|_|_|  |_| |___|___|_| |___|_|  
                                                                                     
 `;
-const VERSION = '0.7.4-experimental.12';
+const VERSION = '0.8.0';
 const Logger = (enableFileLogging: boolean) => {
 	const file = Bun.file('bun-router.log');
 	const writer = enableFileLogging ? file.writer() : null;
@@ -27,12 +27,13 @@ const Logger = (enableFileLogging: boolean) => {
 	}
 
 	return {
-		info: async (statusCode: number, routePath: string, method: string, message?: string) => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		info: async (statusCode: number, routePath: string, method: string, ...args: any[]) => {
 			const { stamp } = timestamp((new Date(Date.now())));
 			const source = color('green', 'bgBlack', `[bun-router ${stamp}]`);
 			const rp = color('white', 'bgBlack', routePath);
 
-			message = `${source}: ${setColor(statusCode)}: ${rp} ${(method === 'GET') ? ' ->' : ' <-'} ${method} ${ message ?? ''}\n`;
+			const message = `${source}: ${setColor(statusCode)}: ${rp} ${(method === 'GET') ? ' ->' : ' <-'} ${method} ${args.map(String).join(' ')}\n'}`;
 
 			await write(message);
 
@@ -64,7 +65,16 @@ const Logger = (enableFileLogging: boolean) => {
 
 			await write(message);
 		},
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		log: async(args: any[]) => {
+			const { stamp } = timestamp((new Date(Date.now())));
+			const source = color('black', 'bgCyan', `[message ${stamp}]`);
+			const messageColor = color('yellow', 'bgBlack', args);
 
+			const message = `${source}: ${messageColor}\n`;
+
+			await write(message);
+		}
 	};
 };
 

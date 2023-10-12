@@ -23,12 +23,12 @@ const Colors: Record<string,string> = {
 } as const;
 
   
-
-function color(foreground: string, background: string, message: string) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function color(foreground: string, background: string, ...args: any[]) {
 	const _foreground = Colors[foreground];
 	const _background = Colors[background];
 	const reset = Colors.reset;
-	return `${_foreground}${_background}${message}${reset}`;
+	return `${_foreground}${_background}${args.map(String).join('')}${reset}`;
 }
 
 
