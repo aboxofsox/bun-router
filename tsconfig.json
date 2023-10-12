@@ -15,9 +15,12 @@
     "forceConsistentCasingInFileNames": true,
     "allowJs": true,
     "noEmit": true,
+    "noImplicitAny": false,
     "types": [
-      "./index.d.ts",
       "bun-types" // add Bun global
-    ]
-  }
+    ],
+    "paths": {
+      "/examples/*": ["./examples/*"]
+    }
+  },
 }

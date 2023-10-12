@@ -1,4 +1,5 @@
-import { TLSOptions, TLSWebSocketServeOptions, WebSocketServeOptions, ServeOptions, TLSServeOptions } from 'bun';
+/* eslint-disable  @typescript-eslint/no-explicit-any */
+import { TLSWebSocketServeOptions, WebSocketServeOptions, ServeOptions, TLSServeOptions } from 'bun';
 import { Logger } from '../logger/logger';
 import { Database } from 'bun:sqlite';
 
@@ -20,7 +21,6 @@ type Route = {
     handler: HttpHandler;
     isLast: boolean;
 }
-
 type Context = {
     db?: Database;
     formData: FormData | Promise<FormData>;
@@ -29,12 +29,14 @@ type Context = {
     params: Map<string, string>;
     query: URLSearchParams;
     request: Request;
+    render: (component: React.ReactNode) => Response | Promise<Response>;
 };
 
 type HttpHandler = (ctx: Context) => Response | Promise<Response>
 
 type Options = {
-    db: string,
+    db: string;
+    enableFileLogging: boolean;
 }
 
 type RouterOptions<Options> = ServeOptions
@@ -43,4 +45,4 @@ type RouterOptions<Options> = ServeOptions
 | TLSWebSocketServeOptions<Options>
 | undefined
 
-export { Context , Route, BunRouter, RouterOptions, Options, HttpHandler }
+export { Context , Route, BunRouter, RouterOptions, Options, HttpHandler };
