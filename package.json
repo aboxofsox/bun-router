@@ -22,3 +22,5 @@
   },
   "types": "./lib/router.d.ts"
 }
+  "version": "0.7.3"
+}
