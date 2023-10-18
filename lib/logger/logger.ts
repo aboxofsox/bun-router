@@ -8,7 +8,7 @@ _                          _
 |___|___|_|_|  |_| |___|___|_| |___|_|  
                                                                                     
 `;
-const VERSION = '0.8.1';
+const VERSION = '0.8.2';
 const Logger = (enableFileLogging: boolean) => {
 	const file = Bun.file('bun-router.log');
 	const writer = enableFileLogging ? file.writer() : null;
@@ -33,7 +33,7 @@ const Logger = (enableFileLogging: boolean) => {
 			const source = color('green', 'bgBlack', `[bun-router ${stamp}]`);
 			const rp = color('white', 'bgBlack', routePath);
 
-			const message = `${source}: ${setColor(statusCode)}: ${rp} ${(method === 'GET') ? ' ->' : ' <-'} ${method} ${args.map(String).join(' ')}\n'}`;
+			const message = `${source}: ${setColor(statusCode)}: ${rp} ${(method === 'GET') ? ' ->' : ' <-'} ${method} ${args.map(String).join(' ')}\n`;
 
 			await write(message);
 
