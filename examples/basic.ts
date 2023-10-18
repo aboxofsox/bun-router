@@ -1,4 +1,4 @@
-import { Router, http } from '..';
+import { Router, http } from '../index';
 
 const router = Router(3000, {enableFileLogging: false});
 

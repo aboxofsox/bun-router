@@ -8,7 +8,7 @@ _                          _
 |___|___|_|_|  |_| |___|___|_| |___|_|  
                                                                                     
 `;
-const VERSION = '0.8.0';
+const VERSION = '0.8.1';
 const Logger = (enableFileLogging: boolean) => {
 	const file = Bun.file('bun-router.log');
 	const writer = enableFileLogging ? file.writer() : null;
